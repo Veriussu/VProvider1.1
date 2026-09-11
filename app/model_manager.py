@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 3 - Model Yöneticisi
+#  Bölüm:    Model Yöneticisi
 #  Dosya:    app/model_manager.py
 #  Amaç:     GGUF modellerini yönetir: disk taraması, belleğe yükleme/
 #            boşaltma, bellek modları (keep/dynamic) ve model başına
@@ -69,7 +69,7 @@ class ModelManager:
 
     @staticmethod
     def _default_factory(info: ModelInfo) -> LlamaEngine:
-        """Gerçek llama.cpp motorunu üretir (Faz 4'te dolacak)."""
+        """Gerçek llama.cpp motorunu üretir."""
         from app import llama_backend
 
         return llama_backend.create_engine(

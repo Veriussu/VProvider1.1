@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 8 - Yönetim Scripti
+#  Bölüm:    Yönetim Scripti
 #  Dosya:    scripts/download.sh
 #  Amaç:     HuggingFace'ten GGUF modeli indirir
 #  Mekanik:  Uygulamanın kendi hf_downloader modülünü kullanır;

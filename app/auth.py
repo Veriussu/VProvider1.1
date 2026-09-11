@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 2 - Kimlik Doğrulama Katmanı
+#  Bölüm:    Kimlik Doğrulama Katmanı
 #  Dosya:    app/auth.py
 #  Amaç:     Şifre hash'leme, oturum yönetimi ve API anahtarı
 #            doğrulamasını sağlar; FastAPI dependency'leri sunar.

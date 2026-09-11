@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 2 - Kimlik Doğrulama Testleri
+#  Bölüm:    Kimlik Doğrulama Testleri
 #  Dosya:    tests/test_auth.py
 #  Amaç:     Kullanıcı oluşturma, şifre doğrulama, oturum yönetimi,
 #            API anahtarı ve site bilgileri mekanizmasını test eder.

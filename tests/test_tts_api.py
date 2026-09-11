@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 13 - Ses (TTS) API Uç Noktası Testleri
+#  Bölüm:    Ses (TTS) API Uç Noktası Testleri
 #  Dosya:    tests/test_tts_api.py
 #  Amaç:     OpenAI uyumlu /v1/audio/speech ve panel /panel/tts/* uçlarını
 #            sahte motorla doğrular (gerçek edge-tts isteği atılmaz).

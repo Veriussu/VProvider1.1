@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 8 - Yönetim Scripti
+#  Bölüm:    Yönetim Scripti
 #  Dosya:    scripts/remove.sh
 #  Amaç:     VProvider'ı sistemden tamamen kaldırır
 #  Mekanik:  - Servisi durdurur ve systemd birimini siler

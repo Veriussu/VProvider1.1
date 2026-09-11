@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 13 - OpenAI Uyumlu Ses (TTS) API'si
+#  Bölüm:    OpenAI Uyumlu Ses (TTS) API'si
 #  Dosya:    app/tts_api.py
 #  Amaç:     OpenAI /v1/audio/speech ile uyumlu metin-sesleme uçları sunar.
 #            OpenAI bu isteklerde sesi ham bayt (audio/mpeg) döner; aynı

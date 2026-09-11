@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 4 - LLM Motoru Testleri
+#  Bölüm:    LLM Motoru Testleri
 #  Dosya:    tests/test_llama_backend.py
 #  Amaç:     Gerçek llama.cpp motorunun (LlamaCppEngine) yükleme,
 #            yanıt üretme, akışlı yanıt ve boşaltma davranışını doğrular.

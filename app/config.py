@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 1 - Yapılandırma Katmanı
+#  Bölüm:    Yapılandırma Katmanı
 #  Dosya:    app/config.py
 #  Amaç:     .env dosyasındaki tüm ayarları okur ve tek noktadan sunar
 #  Mekanik:  pydantic-settings, .env'i okur ve Settings sınıfına eşler.
@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     comfyui_default_checkpoint: str = ""
     comfyui_default_negative: str = "blur, ugly, low quality, watermark"
 
-    # Ses üretimi (TTS) köprüsü — isteğe bağlı modül (Faz 13)
+    # Ses üretimi (TTS) köprüsü — isteğe bağlı modül
     tts_enabled: bool = False
     tts_engine: str = "edge"            # edge-tts (Microsoft çevrimiçi motor)
     tts_voice: str = "tr-TR-EmelNeural" # varsayılan Türkçe kadın sesi

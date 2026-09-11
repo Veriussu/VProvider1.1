@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 8 - Kurulum Scripti
+#  Bölüm:    Kurulum Scripti
 #  Dosya:    install.sh
 #  Amaç:     Tek komutla VProvider kurulumu: donanım tespiti →
 #            derleme bayrakları → venv + bağımlılıklar → llama-cpp-python
@@ -34,7 +34,7 @@ for arg in "$@"; do
 done
 
 # ─────────────────────────────────────────────
-# Banner (walkthrought.md Bölüm 10 ile birebir)
+# Banner
 # ─────────────────────────────────────────────
 LINE="--------------------------------------------------------------------------------"
 banner() {

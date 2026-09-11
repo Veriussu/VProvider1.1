@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 4+5 - LLM Motoru
+#  Bölüm:    LLM Motoru
 #  Dosya:    app/llama_backend.py
 #  Amaç:     GGUF modelini çalıştıran motorun arayüzünü (sözleşme) ve
 #            gerçek llama.cpp uygulamasını sunar.

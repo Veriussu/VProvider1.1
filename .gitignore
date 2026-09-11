@@ -31,3 +31,5 @@ runtime/
 # Statik üretim
 dist/
 build/
+# Yerel teşhis notu
+terminal.txt

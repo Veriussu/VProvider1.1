@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 11 - ComfyUI Yönetim Scripti
+#  Bölüm:    ComfyUI Yönetim Scripti
 #  Dosya:    scripts/comfyui.sh
 #  Amaç:     VProvider'ın görsel üretim köprüsü için gerekli olan
 #            ComfyUI motorunu başlatır/durdurur/durum gösterir.

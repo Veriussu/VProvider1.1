@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 6 - Model İndirici
+#  Bölüm:    Model İndirici
 #  Dosya:    app/hf_downloader.py
 #  Amaç:     HuggingFace'ten GGUF modellerini aramak, indirmek ve
 #            silmek için yalın bir katman sunar.

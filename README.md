@@ -27,16 +27,20 @@ de HuggingFace'ten tek tıkla model indirir, bellek kullanımını yönetirsiniz
   panelde "Görsel Üretim" sekmesi; LLM kullanım bitince GPU'yu bıraktığı için
   görsel motoruyla VRAM yarışmaz
 - **Video üretim (AnimateDiff köprüsü)** — `/v1/videos/generations` + panelde
-  "Video Üretim" sekmesi; kareler sunucuda GIF'e birleştirilir (Faz 12)
+  "Video Üretim" sekmesi; kareler sunucuda GIF'e birleştirilir
 - **Ses üretim (TTS köprüsü)** — OpenAI uyumlu `/v1/audio/speech` (edge-tts,
-  Türkçe sesler) + panelde "Ses Üretim" sekmesi; GPU gerekmez, internet ister (Faz 13)
+  Türkçe sesler) + panelde "Ses Üretim" sekmesi; GPU gerekmez, internet ister
 - **Panel içi sohbet** — "Sohbet" sekmesiyle seçili modeli arayüzden test etme;
-  `/panel/chat` uç noktası açık API anahtarı istemez, yalnızca panel oturumu (Faz 14)
+  `/panel/chat` uç noktası açık API anahtarı istemez, yalnızca panel oturumu
 - **API Anahtarları sekmesi** — birden çok isimlendirilmiş API anahtarı oluşturma,
   listeleme, kopyalama ve silme; eski tek `settings.api_key` otomatik "Varsayılan"
-  anahtarına taşınır (Faz 15)
+  anahtarına taşınır
 - **Güvenlik** — panel kullanıcı adı/şifre, `/v1/*` API anahtarı (`Bearer`) ile ayrı
   ayrı korunur; şifreler bcrypt ile saklanır
+- **Değişmez sistem kimliği** — Proje adı, GitHub/domain/mail bağlantıları, logo ve
+  favicon **kod içine gömülüdür** (`app/config.py` → `SITE_IDENTITY` + `static/logo.png`,
+  `static/favicon.png`). Veritabanında saklanmaz, panelden değiştirilemez; her kurulum
+  aynı kimliği taşır.
 - **Yönetim scriptleri** — kurulum, başlat/durdur/yeniden başlat, model indir, tam silme
 - **Farklı motorlar** — sahte motorla test (hızlı CI), gerçek llama.cpp motoruyla üretim
 
@@ -105,7 +109,7 @@ değilse uvicorn'u doğrudan yönetirler.
 
 | Değişken | Varsayılan | Açıklama |
 |---|---|---|
-| `APP_NAME` | `VProvider` | Uygulama adı (site_info dolana kadar) |
+| `APP_NAME` | `VProvider` | Uygulama adı |
 | `HOST` | `0.0.0.0` | Dinleme adresi (LAN için `0.0.0.0`) |
 | `PORT` | `9055` | Dinleme portu |
 | `MEMORY_MODE` | `dynamic` | `keep` / `dynamic` |
@@ -313,19 +317,21 @@ motordur — GPU gerektirmez ama internet bağlantısı ister.
 vprovider/
 ├── app/                  # Uygulama kaynak kodu
 │   ├── main.py           # Uygulama + router bağlama + panel ön yüzü
-│   ├── config.py         # .env okuma
+│   ├── config.py         # .env okuma + sabit sistem kimliği (SITE_IDENTITY)
 │   ├── model_manager.py  # Bellek modları + yükleme/boşaltma
 │   ├── llama_backend.py  # llama.cpp sarmalayıcı (gerçek motor)
 │   ├── auth.py           # Kullanıcı/şifre + API anahtarı
-│   ├── user_store.py     # SQLite (kullanıcı, session, ayarlar, logo)
+│   ├── user_store.py     # SQLite (kullanıcı, oturum, ayarlar, API anahtarları)
 │   ├── hf_downloader.py  # HuggingFace arama + resumable indirme
 │   ├── openai_api.py     # /v1/* router
 │   ├── admin_api.py      # /panel/* router
-│   ├── comfy_client.py   # ComfyUI HTTP istemcisi (Faz 11-12: görsel + video)
-│   ├── comfy_api.py      # /v1/images/* + /v1/videos/* (Faz 11-12)
-│   ├── tts_backend.py    # Ses üretim motoru (edge-tts, Faz 13)
-│   └── tts_api.py        # /v1/audio/* (Faz 13)
+│   ├── comfy_client.py   # ComfyUI HTTP istemcisi (görsel + video)
+│   ├── comfy_api.py      # /v1/images/* + /v1/videos/*
+│   ├── tts_backend.py    # Ses üretim motoru (edge-tts)
+│   └── tts_api.py        # /v1/audio/*
 ├── static/index.html     # Yönetim paneli (tek dosya)
+├── static/logo.png       # Gömülü proje logosu (değiştirilemez)
+├── static/favicon.png    # Gömülü tarayıcı simgesi (değiştirilemez)
 ├── scripts/              # start/stop/restart/download/remove
 ├── scripts/comfyui.sh          # ComfyUI motoru başlat/durdur/durum (çalışmazsa 1 döner)
 ├── scripts/comfyui-checkpoint.sh  # HF checkpoint indirici

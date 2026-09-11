@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 9 - Uçtan Uca Testler
+#  Bölüm:    Uçtan Uca Testler
 #  Dosya:    tests/test_e2e.py
 #  Amaç:     Gerçek GGUF modeli + gerçek llama.cpp motoruyla tam akışı
 #            doğrular: panel oturumu, model listesi, yükleme, chat

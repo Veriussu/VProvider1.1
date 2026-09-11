@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 13 - Ses Üretimi (TTS) Motoru
+#  Bölüm:    Ses Üretimi (TTS) Motoru
 #  Dosya:    app/tts_backend.py
 #  Amaç:     Metinden konuşma (TTS) üretir. Varsayılan motor edge-tts
 #            (Microsoft Edge çevrimiçi motoru): hafif, saf Python, MP3

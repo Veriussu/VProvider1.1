@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 11-12 - OpenAI Uyumlu Görsel + Video Üretim API'si
+#  Bölüm:    OpenAI Uyumlu Görsel + Video Üretim API'si
 #  Dosya:    app/comfy_api.py
 #  Amaç:     ComfyUI motorunu OpenAI /v1/görseller ve /v1/videolar biçiminde
 #            sunar. Aynı kimlik doğrulama (Bearer) ve hata yapısı (detail.error)
@@ -8,7 +8,7 @@
 #            - /v1/images/file/{id}/{i}      -> url modunda görsel
 #            - /v1/images/comfy/checkpoints  -> checkpoint listesi
 #            - /v1/videos/generations        -> video (GIF); url modu
-#            - /v1/videos/file/{id}          -> url modunda video (Faz 12)
+#            - /v1/videos/file/{id}          -> url modunda video
 #            - model alanı checkpoint seçimidir; verilmezse varsayılan kullanılır.
 #  Kullanım: app/main.py içinde app.include_router(comfy_router)
 # ─────────────────────────────────────────────────────────────
@@ -155,7 +155,7 @@ def serve_image(prompt_id: str, index: int):
 
 
 # ------------------------------------------------------------------
-# Uç noktalar: /v1/videos/* (Faz 12)
+# Uç noktalar: /v1/videos/*
 # ------------------------------------------------------------------
 
 @video_router.get("/comfy/checkpoints")

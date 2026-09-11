@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 6 - Model İndirici Testleri
+#  Bölüm:    Model İndirici Testleri
 #  Dosya:    tests/test_hf_downloader.py
 #  Amaç:     Arama, dosya seçimi (nicelik), parça parça sürdürülebilir
 #            indirme ve silme işlevlerini çevrimdışı (fake/sahte) doğrular.

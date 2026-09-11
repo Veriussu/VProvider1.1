@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 3 - Model Yöneticisi Testleri
+#  Bölüm:    Model Yöneticisi Testleri
 #  Dosya:    tests/test_model_manager.py
 #  Amaç:     GGUF taraması, bellek modları (keep/dynamic), yükleme/
 #            boşaltma ve idle süresiyle otomatik boşaltmayı sahte

@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 13 - Ses Üretim Motoru Testleri
+#  Bölüm:    Ses Üretim Motoru Testleri
 #  Dosya:    tests/test_tts_backend.py
 #  Amaç:     tts_backend.synthesize + depo akışını sahte edge-tts ile
 #            doğrular; gerçek Microsoft servisine istek atılmaz.

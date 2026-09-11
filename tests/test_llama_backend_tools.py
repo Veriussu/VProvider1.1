@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 5+ - Motor Araç (Tool) Davranışı Testleri
+#  Bölüm:    Motor Araç (Tool) Davranışı Testleri
 #  Dosya:    tests/test_llama_backend_tools.py
 #  Amaç:     LlamaCppEngine'in araç çağrısı mantığını (tool_call_info,
 #            event'li akış) gerçek model gerektirmeden stub ile doğrular.

@@ -1,9 +1,9 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 11-12 - ComfyUI İstemcisi Testleri
+#  Bölüm:    ComfyUI İstemcisi Testleri
 #  Dosya:    tests/test_comfy_client.py
 #  Amaç:     ComfyUI köprüsünün HTTP davranışını sahte (MockTransport)
 #            ağ ile doğrular; gerçek ComfyUI kurulumu gerekmez.
-#            Faz 12: AnimateDiff video workflow + GIF birleştirme.
+
 #  Mekanik:  - httpx.MockTransport ile /system_stats, /object_info,
 #              /prompt, /history, /view uçları simüle edilir.
 #            - generate_image bütünü (kuyruk -> bekle -> indir -> depo)
@@ -239,7 +239,7 @@ def test_get_stored_image_missing_returns_none():
 
 
 # ------------------------------------------------------------------
-# Video (Faz 12): AnimateDiff workflow
+# Video: AnimateDiff workflow
 # ------------------------------------------------------------------
 
 def _fake_png_bytes(width=64, height=64, red=100):

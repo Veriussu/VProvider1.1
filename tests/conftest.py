@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 2 - Test Altyapısı
+#  Bölüm:    Test Altyapısı
 #  Dosya:    tests/conftest.py
 #  Amaç:     Testlerde kullanılacak ortak nesneleri hazırlar
 #  Mekanik:  Her test için geçici bir dizinde yeni bir veritabanı

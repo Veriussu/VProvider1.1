@@ -1,4 +1,4 @@
-# ComfyUI Görsel Üretim Rehberi (Faz 11)
+# ComfyUI Görsel Üretim Rehberi
 
 VProvider görsel üretimi **harici bir ComfyUI** süreciyle yapar. Bu rehber ComfyUI'yi
 kurup internetten görsel üreten (txt2img) ilk checkpoint'inizi gösterir.
@@ -123,7 +123,7 @@ bash scripts/comfyui.sh status   # artık systemd üzerinden raporlar
 | SD 1.5 (`v1-5-pruned`) | ~4 GB | ~15-30 sn | Başlangıç için ideal |
 | SDXL Base | ~6,5 GB | ~40-90 sn | Kalite; `--highvram` yerine auto önerilir |
 | FLUX.1 (schnell/dev) | >10 GB | — | Özel workflow + daha fazla VRAM gerekir |
-| SVD / Wan (video) | ~2-14 GB | — | Faz 12 kapsamı; VRAM sınırlı |
+| SVD / Wan (video) | ~2-14 GB | — | VRAM sınırlı |
 
 Yetersiz VRAM'de "CUDA out of memory" hatası görürseniz: adım sayısını azaltın,
 512x512 kullanın, `n`'yi 1 yapın ve LLM'in `IDLE_TIMEOUT_MINUTES=0` (varsayılan)
@@ -142,7 +142,7 @@ olduğundan emin olun.
 
 ---
 
-## 9. Video Üretimi (Faz 12, AnimateDiff)
+## 9. Video Üretimi
 
 Video, **AnimateDiff Evolved (ADE)** node paketiyle üretilen karelerin sunucuda
 GIF'e birleştirilmesiyle çalışır (`/v1/videos/generations`).

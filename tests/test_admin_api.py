@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 7 - Yönetim Paneli API Testleri
+#  Bölüm:    Yönetim Paneli API Testleri
 #  Dosya:    tests/test_admin_api.py
 #  Amaç:     Kurulum, giriş/çıkış, oturum koruması, model yönetimi ve
 #            isimlendirilmiş API anahtarı akışlarını sahte motor + geçici

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 11 - ComfyUI Checkpoint İndirici
+#  Bölüm:    ComfyUI Checkpoint İndirici
 #  Dosya:    scripts/comfyui-checkpoint.sh
 #  Amaç:     HuggingFace'teki bir checkpoint dosyasını ComfyUI'nin
 #            models/checkpoints/ klasörüne indirir (SD/SDXL/FLUX).

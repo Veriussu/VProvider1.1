@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 11 - ComfyUI API Uç Noktası Testleri
+#  Bölüm:    ComfyUI API Uç Noktası Testleri
 #  Dosya:    tests/test_comfy_api.py
 #  Amaç:     OpenAI uyumlu /v1/images/* ve panel /panel/comfy/* uçlarını
 #            sahte istemciyle doğrular (gerçek ComfyUI gerekmez).
@@ -145,7 +145,7 @@ def test_checkpoints_endpoint(client, monkeypatch):
 
 
 # ------------------------------------------------------------------
-# OpenAI uyumlu /v1/videos/* (Faz 12)
+# OpenAI uyumlu /v1/videos/*
 # ------------------------------------------------------------------
 
 def test_videos_requires_api_key(client):

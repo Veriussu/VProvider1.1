@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 7 - Yönetim Paneli API'si
+#  Bölüm:    Yönetim Paneli API'si
 #  Dosya:    app/admin_api.py
 #  Amaç:     Web panelinin arka ucu: ilk kurulum, giriş/çıkış, model
 #            yönetimi, HuggingFace araması + indirme ve API anahtarları.
@@ -649,7 +649,7 @@ def comfy_video(prompt_id: str, _: dict = Depends(get_current_session)):
 
 
 # ------------------------------------------------------------------
-# Ses üretimi (TTS, Faz 13) — oturum korumalı
+# Ses üretimi (TTS) — oturum korumalı
 # ------------------------------------------------------------------
 
 @router.get("/tts/status")

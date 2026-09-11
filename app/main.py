@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 1+2 - Uygulama Girişi
+#  Bölüm:    Uygulama Girişi
 #  Dosya:    app/main.py
 #  Amaç:     FastAPI uygulamasını oluşturur, veri katmanını hazırlar,
 #            logo/favicon uç noktalarını ve kullanılabilirlik

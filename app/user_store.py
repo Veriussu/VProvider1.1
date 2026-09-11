@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 2 - Veri Katmanı
+#  Bölüm:    Veri Katmanı
 #  Dosya:    app/user_store.py
 #  Amaç:     Kullanıcı, oturum, uygulama ayarları ve site bilgilerini
 #            SQLite veritabanında tutar.

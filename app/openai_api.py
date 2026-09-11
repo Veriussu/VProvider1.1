@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 5 - OpenAI Uyumlu API
+#  Bölüm:    OpenAI Uyumlu API
 #  Dosya:    app/openai_api.py
 #  Amaç:     OpenAI standartlarında /v1/* uç noktalarını sunar.
 #  Mekanik:  - Tüm uç noktalar API anahtarı (Bearer) zorunludur.

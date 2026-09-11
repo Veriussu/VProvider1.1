@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 8 - Yönetim Scripti
+#  Bölüm:    Yönetim Scripti
 #  Dosya:    scripts/stop.sh
 #  Amaç:     VProvider sunucusunu durdurur
 #  Mekanik:  systemd servisi kurulmuşsa "systemctl stop" kullanır;

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 8 - Yönetim Scripti
+#  Bölüm:    Yönetim Scripti
 #  Dosya:    scripts/restart.sh
 #  Amaç:     VProvider sunucusunu durdurup yeniden başlatır
 #  Mekanik:  systemd kuruluysa "systemctl restart"; değilse

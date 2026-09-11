@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 11-12 - ComfyUI Köprüsü (Görsel + Video Üretimi)
+#  Bölüm:    ComfyUI Köprüsü (Görsel + Video Üretimi)
 #  Dosya:    app/comfy_client.py
 #  Amaç:     ComfyUI (üretim motoru) ile konuşan ince istemci.
 #            VProvider metin LLM için llama.cpp kullanır; görsel/video üretimde
@@ -13,7 +13,7 @@
 #            - /view          : üretilen görselin baytları
 #            - generate_image(): görsel üretir, in-memory depoda saklar.
 #            - generate_video (): AnimateDiff karelerini üretir, kareleri
-#              Pillow ile GIF'e birleştirir ve depoya yazar (Faz 12).
+#              Pillow ile GIF'e birleştirir ve depoya yazar.
 #  Kullanım: comfy_client.generate_image(prompt="kedi", ...)
 #            comfy_client.generate_video(prompt="kedi koşuyor", ...)
 # ─────────────────────────────────────────────────────────────

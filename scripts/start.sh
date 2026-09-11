@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 8 - Yönetim Scripti
+#  Bölüm:    Yönetim Scripti
 #  Dosya:    scripts/start.sh
 #  Amaç:     VProvider sunucusunu başlatır
 #  Mekanik:  systemd servisi kurulmuşsa "systemctl start" kullanır;

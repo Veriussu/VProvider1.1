@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  Bölüm:    Faz 5 - OpenAI Uyumlu API Testleri
+#  Bölüm:    OpenAI Uyumlu API Testleri
 #  Dosya:    tests/test_openai_api.py
 #  Amaç:     /v1/* uç noktalarının OpenAI yapısını (auth, liste,
 #            chat, completion, akış/SSE) sahte motorla doğrular.

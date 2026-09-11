@@ -124,6 +124,7 @@
   .modal-x { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; }
   .modal-x:hover { color: var(--text); }
   .modal-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 
   .hf-result { display: block; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px;
     background: var(--panel2); cursor: pointer; }
@@ -501,6 +502,22 @@
 </main>
 
 <div id="toast" class="toast hidden"></div>
+
+<div id="modal-confirm" class="modal-overlay hidden" onclick="closeConfirmOnBg(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="confirm-title">Onayla</h3>
+      <button class="modal-x" onclick="closeConfirm()" title="Kapat">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-msg" style="margin:0; color:var(--text); line-height:1.6;"></p>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeConfirm()">Vazgeç</button>
+        <button class="btn danger" id="confirm-yes">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="modal-add" class="modal-overlay hidden" onclick="closeAddModelOnBg(event)">
   <div class="modal">
@@ -1009,14 +1026,37 @@ function renderModel(m) {
   $("model-list").appendChild(el);
   el.querySelector('[data-act="keep"]').addEventListener("click", () => modelAction("mode", m.id, "keep"));
   el.querySelector('[data-act="dynamic"]').addEventListener("click", () => modelAction("mode", m.id, "dynamic"));
-  el.querySelector('[data-act="delete"]').addEventListener("click", async () => {
-    if (!confirm(m.id + " modelini diskten silmek istiyor musunuz?")) return;
-    try {
-      await api("/panel/models/" + encodeURIComponent(m.id) + "/delete", { method: "POST" });
-      toast(m.id + " silindi.");
-      loadModels();
-    } catch (e) { toast(e.message, false); }
+  el.querySelector('[data-act="delete"]').addEventListener("click", () => {
+    openConfirm("Modeli Sil", m.id + " modelini ve dosyalarını diskten kalıcı olarak silmek istiyor musunuz?", async () => {
+      try {
+        await api("/panel/models/" + encodeURIComponent(m.id) + "/delete", { method: "POST" });
+        toast(m.id + " silindi.");
+        loadModels();
+      } catch (e) { toast(e.message, false); }
+    });
   });
+}
+
+// ---------- onay modalı ----------
+let _confirmOnYes = null;
+function openConfirm(title, message, onYes, yesLabel) {
+  $("confirm-title").textContent = title;
+  $("confirm-msg").textContent = message;
+  $("confirm-yes").textContent = yesLabel || "Evet, Sil";
+  _confirmOnYes = onYes;
+  $("modal-confirm").classList.remove("hidden");
+}
+function closeConfirm() {
+  _confirmOnYes = null;
+  $("modal-confirm").classList.add("hidden");
+}
+function confirmYes() {
+  const cb = _confirmOnYes;
+  closeConfirm();
+  if (cb) cb();
+}
+function closeConfirmOnBg(event) {
+  if (event.target === event.currentTarget) closeConfirm();
 }
 
 async function modelAction(action, id, value) {
@@ -1344,12 +1384,13 @@ async function createApi() {
 }
 
 async function deleteApi(id) {
-  if (!confirm("Bu API anahtarını silmek istiyor musunuz? Kullanan istemciler artık bağlanamaz.")) return;
-  try {
-    await api("/panel/apis/" + id, { method: "DELETE" });
-    toast("API anahtarı silindi.");
-    loadApis();
-  } catch (e) { toast(e.message, false); }
+  openConfirm("API Anahtarı Sil", "Bu API anahtarını silmek istiyor musunuz? Kullanan istemciler artık bağlanamaz.", async () => {
+    try {
+      await api("/panel/apis/" + id, { method: "DELETE" });
+      toast("API anahtarı silindi.");
+      loadApis();
+    } catch (e) { toast(e.message, false); }
+  });
 }
 
 $("login-pass").addEventListener("keydown", (e) => { if (e.key === "Enter") submitLogin(); });
