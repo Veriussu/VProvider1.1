@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────
+#  VProvider dış ağ yayını — Caddy (otomatik HTTPS)
+#  Dosya:    deploy/Caddyfile
+#  Amaç:     LAN'da IP ile yayın VEYA domain ile dış ağ + Let's Encrypt.
+#  Kurulum:  sudo apt install caddy  (veya https://caddyserver.com)
+#  Kullanım: sudo caddy run --config /etc/caddy/Caddyfile
+#            Not: Bu dosya örnek şablonudur; alan adınızı değiştirin!
+#
+#  En güvenli düzen:
+#    - VProvider yalnızca yerelde dinler  (HOST=127.0.0.1, boşta 9055)
+#    - Caddy 80/443'ü dinler, tüm trafiği VProvider'a iletir.
+# ─────────────────────────────────────────────────────────────
+
+# A) YALNIZCA LAN (alan adı yok) — sertifika olmadan, HTTP.
+#    Bilgisayarınızın IP'si ile: http://192.168.1.50:8080/v1/...
+#:8080 {
+#    reverse_proxy 127.0.0.1:9055
+#}
+
+# B) DIŞ AĞ — alan adınızla (otomatik Let's Encrypt sertifikası)
+#    DNS A kaydı = sunucunun genel IP'si olmalı; port 80/443 açık.
+modelim.ornek-domain.com {
+    encode gzip
+
+    # ---- OpenAI uyumlu /v1 uçları ----
+    # SSE (stream) anında aksın: flush_interval -1 (yoksa önbellek geciktirir)
+    handle /v1/* {
+        reverse_proxy 127.0.0.1:9055 {
+            flush_interval -1
+        }
+    }
+
+    # ---- Yönetim paneli ----
+    # Panelde zaten kullanıcı adı + şifre vardır; dış ağda ek bir
+    # katman için basic_auth da önerilir.
+    #   Şifre üret:  caddy hash-password
+    handle /panel* {
+        basic_auth {
+            yonetici $2a$14$REPLACE_WITH_HASH_PASSWORD_OUTPUT
+        }
+        reverse_proxy 127.0.0.1:9055
+    }
+
+    # ---- Diğer tüm istekler (anasayfa, /health vb.) ----
+    handle {
+        reverse_proxy 127.0.0.1:9055
+    }
+}
+
+# ------------------------------------------------------------------
+# İsteğe bağlı ekler
+# ------------------------------------------------------------------
+
+# HIZ SINIRI (rate_limit): Çekirdekte YOKTUR, topluluk modülü ile derlenmeli:
+#   xcaddy build --with github.com/mholt/caddy-ratelimit
+# Ardından site bloğunun üstüne ekleyin:
+#   rate_limit {
+#       zone v1 {
+#           key {remote_host}
+#           events 60            # dakikada en çok istek
+#           window 1m
+#       }
+#   }
+
+# Web arayüzlerinden (ör. Open WebUI) tarayıcıda çağrı yapılacaksa CORS:
+#   header /v1/* Access-Control-Allow-Origin "*"
+#   header /v1/* Access-Control-Allow-Headers "Authorization, Content-Type"
+#   header /v1/* Access-Control-Allow-Methods "GET, POST, OPTIONS"
+
+# Uzun yanıtların (büyük context) Caddy tarafından kesilmemesi için:
+#   request_timeout 10m
+#   reverse_proxy ... { flush_interval -1 transport http { read_timeout 0 } }

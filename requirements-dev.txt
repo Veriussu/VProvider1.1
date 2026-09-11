@@ -1,0 +1,9 @@
+# ─────────────────────────────────────────────────────────────
+#  Bölüm:    Faz 9 - Geliştirme Bağımlılıkları
+#  Dosya:    requirements-dev.txt
+#  Amaç:     Sadece test/geliştirme sırasında gereken paketler
+#  Mekanik:  pip install -r requirements-dev.txt
+# ─────────────────────────────────────────────────────────────
+
+-r requirements.txt
+pytest

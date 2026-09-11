@@ -1,0 +1,18 @@
+# ─────────────────────────────────────────────────────────────
+#  Bölüm:    Faz 1 - Bağımlılıklar
+#  Dosya:    requirements.txt
+#  Amaç:     VProvider sunucusunun temel Python bağımlılıkları
+#  Mekanik:  pip install -r requirements.txt ile kurulur.
+#  Not:      llama-cpp-python buraya konmaz; donanıma özel
+#            derleme bayraklarıyla install.sh içinde kurulur.
+# ─────────────────────────────────────────────────────────────
+
+fastapi
+uvicorn[standard]
+pydantic-settings
+huggingface-hub
+bcrypt
+httpx
+python-multipart
+Pillow>=10.0
+edge-tts

@@ -1,0 +1,33 @@
+# ─────────────────────────────────────────────────────────────
+#  Bölüm:    Faz 1 - Version Control
+#  Dosya:    .gitignore
+#  Amaç:     Gizli ve üretilebilir dosyaları sürüm kontrolü dışında tutar
+#  Mekanik:  Git tarafından okunur; belirtilen desenlere uyan dosyalar izlenmez
+# ─────────────────────────────────────────────────────────────
+
+# Ortam ve gizlilik
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Test
+.pytest_cache/
+
+# Çalışma zamanı verisi (kullanıcılar, session'lar)
+data/*
+!data/.gitkeep
+
+# İndirilen modeller (büyük dosyalar)
+models/*
+!models/.gitkeep
+
+# Çalışma zamanı logları
+runtime/
+
+# Statik üretim
+dist/
+build/

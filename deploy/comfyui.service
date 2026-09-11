@@ -1,0 +1,19 @@
+[Unit]
+Description=ComfyUI - Görsel Üretim Motoru (VProvider köprüsü)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{USER}}
+WorkingDirectory={{COMFY_DIR}}
+Environment=PYTHONUNBUFFERED=1
+# ComfyUI kendi venv'inde çalışır; port varsayılan 8188.
+# COMFY_PORT değişkeni VProvider'ın .env'inde 8188 olmalıdır.
+ExecStart={{COMFY_DIR}}/.venv/bin/python main.py --listen 127.0.0.1 --port 8188
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

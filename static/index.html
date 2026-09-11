@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VProvider - Yönetim Paneli</title>
+<style>
+  :root {
+    --bg: #12151c; --panel: #1a1f2a; --panel2: #222837; --line: #2c3445;
+    --text: #e6e9f0; --muted: #8b93a7; --accent: #4f8cff; --ok: #3ddc84;
+    --warn: #ffb347; --err: #ff6b6b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+  .hidden { display: none !important; }
+
+  header {
+    display: flex; align-items: center; gap: 12px; justify-content: space-between;
+    padding: 14px 22px; background: var(--panel); border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  header img.logo { height: 34px; border-radius: 6px; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  header .right { display: flex; align-items: center; gap: 14px; }
+
+  .nav-row { display: flex; align-items: center; gap: 16px; width: 100%; }
+  .nav-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .nav-tabs { display: flex; align-items: center; justify-content: center; gap: 6px;
+    flex: 1; flex-wrap: wrap; }
+  @media (max-width: 980px) {
+    .nav-row { flex-direction: column; gap: 10px; }
+    .nav-left { align-self: center; }
+    .nav-right { align-self: center; }
+  }
+  .btn {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 14px;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.danger { border-color: var(--err); color: var(--err); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 22px; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px; margin-bottom: 16px;
+  }
+  h2 { font-size: 16px; margin-bottom: 14px; }
+  h3 { font-size: 14px; margin: 12px 0 8px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  input[type=text], input[type=password], input[type=search], select.files {
+    width: 100%; background: var(--panel2); border: 1px solid var(--line); color: var(--text);
+    padding: 10px 12px; border-radius: 8px; font-size: 14px;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 160px; }
+  .field { margin-bottom: 10px; }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; }
+  .badge.keep { background: rgba(79,140,255,.18); color: var(--accent); }
+  .badge.dynamic { background: rgba(255,179,71,.16); color: var(--warn); }
+  .badge.on { background: rgba(61,220,132,.18); color: var(--ok); }
+  .badge.off { background: rgba(139,147,167,.15); color: var(--muted); }
+
+  .model { display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 14px 16px; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; flex-wrap: wrap;}
+  .model .info { display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
+  .model .name { font-weight: 600; word-break: break-all; }
+  .model .meta { color: var(--muted); font-size: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .model .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .mcat { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; border: 1px solid var(--line); }
+  .mcat.metin { color: var(--accent); border-color: rgba(79,140,255,.35); background: rgba(79,140,255,.12); }
+  .mcat.görsel { color: #b78bff; border-color: rgba(183,139,255,.35); background: rgba(183,139,255,.12); }
+  .mcat.ses { color: var(--ok); border-color: rgba(61,220,132,.35); background: rgba(61,220,132,.12); }
+  .mcat.video { color: #ff8a5c; border-color: rgba(255,138,92,.35); background: rgba(255,138,92,.12); }
+  .mcat.müzik { color: #ffd166; border-color: rgba(255,209,102,.35); background: rgba(255,209,102,.12); }
+  .loaded-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+  .loaded-dot.on { background: var(--ok); box-shadow: 0 0 0 3px rgba(61,220,132,.15); }
+  .loaded-dot.off { background: var(--muted); box-shadow: 0 0 0 3px rgba(139,147,167,.12); }
+
+  .icon-btn { position: relative; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--panel2); color: var(--muted); cursor: pointer; display: inline-flex; align-items: center;
+    justify-content: center; transition: color .15s, border-color .15s; }
+  .icon-btn svg { width: 17px; height: 17px; }
+  .icon-btn:hover { color: var(--text); border-color: var(--accent); }
+  .icon-btn.active.keep { color: var(--accent); border-color: var(--accent); background: rgba(79,140,255,.12); }
+  .icon-btn.active.dynamic { color: var(--warn); border-color: var(--warn); background: rgba(255,179,71,.14); }
+  .icon-btn.danger:hover { color: #ff5f57; border-color: #ff5f57; }
+  .icon-btn .tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    background: #14161a; color: #fff; padding: 4px 9px; border-radius: 6px; font-size: 11px;
+    white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 40;
+    border: 1px solid var(--line); }
+  .icon-btn .tip::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: #14161a; }
+  .icon-btn:hover .tip { opacity: 1; }
+
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 62vh; text-align: center; gap: 8px; }
+  .empty-state .big { font-size: 28px; font-weight: 700; color: var(--text); }
+
+  .page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .page-head h2 { margin: 0; font-size: 18px; }
+
+  .search-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .search-row input { flex: 2; min-width: 200px; }
+  .search-row select { flex: 1; min-width: 150px; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex;
+    align-items: center; justify-content: center; z-index: 60; padding: 16px; }
+  .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    width: 660px; max-width: 100%; max-height: 88vh; display: flex; flex-direction: column; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .modal-head h3 { margin: 0; font-size: 16px; }
+  .modal-x { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; }
+  .modal-x:hover { color: var(--text); }
+  .modal-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+
+  .hf-result { display: block; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px;
+    background: var(--panel2); cursor: pointer; }
+  .hf-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .hf-result:hover { border-color: var(--accent); }
+  .hf-result.selected { border-color: var(--accent); background: rgba(79,140,255,.1); }
+  .hf-result .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .insparam { margin-top: 10px; }
+  .dl-progress { margin-top: 10px; }
+
+  .param-panel { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px; background: var(--panel2); }
+  .param-panel .sel-repo { font-weight: 600; margin-bottom: 8px; word-break: break-all; }
+  .param-opt { display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; cursor: pointer;
+    background: var(--panel); }
+  .param-opt.active { border-color: var(--accent); background: rgba(79,140,255,.1); }
+  .param-opt input { accent-color: var(--accent); }
+  .param-opt .pname { flex: 1; font-size: 13px; word-break: break-all; }
+  .param-opt .psize { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .param-opt .reco { font-size: 11px; color: var(--ok); font-weight: 600; }
+
+  .progress-track { height: 8px; background: var(--panel2); border-radius: 20px; overflow: hidden; margin-top: 8px; }
+  .progress-bar { height: 100%; width: 0%; background: var(--accent); transition: width .3s; }
+  .dl-info { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .model.downloading .dl-info { margin: 0; min-width: 130px; }
+  .model.downloading .dlbox { flex: 1 1 320px; min-width: 280px; }
+  .dl-row { display: flex; align-items: center; gap: 10px; }
+  .dl-row .progress-track { flex: 1; margin: 0; }
+  .dl-pct { min-width: 42px; text-align: right; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .warn-label {
+    margin-top: 14px; padding: 10px 12px; border-radius: 10px;
+    background: rgba(255, 193, 7, .1); border: 1px solid rgba(255, 193, 7, .35);
+    color: var(--text); font-size: 12.5px; line-height: 1.5;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .warn-label svg { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 1px; color: var(--warn); }
+  select { background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 7px; }
+
+  .api-key { font-family: ui-monospace, monospace; font-size: 13px; background: var(--panel2);
+    border: 1px dashed var(--line); padding: 10px 12px; border-radius: 8px; word-break: break-all; }
+
+  .api-row { border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+    background: var(--panel2); margin-bottom: 10px; }
+  .api-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    margin-bottom: 8px; flex-wrap: wrap; }
+  .api-name { font-weight: 600; color: var(--text); }
+  .api-date { font-size: 12px; }
+
+  .toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 16px; font-size: 13px; z-index: 50; max-width: 90%;
+  }
+  .auth-wrap { max-width: 420px; margin: 0 auto; min-height: calc(100vh - 80px); display: flex;
+    flex-direction: column; align-items: center; justify-content: center; padding: 20px 0; }
+  .auth-wrap .auth-logo { height: 72px; width: 72px; border-radius: 16px; object-fit: cover;
+    margin-bottom: 18px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .auth-wrap .brand-title { font-size: 17px; font-weight: 600; margin: 0 0 18px; color: var(--text); }
+  .auth-wrap .card { width: 100%; }
+  .auth-corner { position: fixed; right: 18px; bottom: 16px; display: flex; gap: 10px;
+    align-items: center; z-index: 40; }
+  .auth-corner a { display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 8px; background: var(--panel2);
+    border: 1px solid var(--line); overflow: hidden; }
+  .auth-corner svg { width: 17px; height: 17px; fill: var(--muted); }
+  .auth-corner img.fav { width: 22px; height: 22px; object-fit: contain; }
+  .auth-copy { position: fixed; left: 0; right: 0; bottom: 20px; text-align: center;
+    color: var(--muted); font-size: 12px; z-index: 40; }
+  .auth-copy a { color: var(--muted); text-decoration: underline; }
+  .tab { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); cursor: pointer; font-size: 14px; }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  @media (max-width: 640px) {
+    .tab { padding: 7px 12px; font-size: 13px; }
+  }
+  .muted { color: var(--muted); font-size: 12px; }
+  .empty { color: var(--muted); font-size: 13px; padding: 12px 0; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 8px;}
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 8px;}
+  .comfy-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; }
+  .comfy-grid figure { margin: 0; max-width: 380px; }
+  .comfy-grid img { width: 100%; border-radius: 10px; border: 1px solid var(--line); }
+  .comfy-grid figcaption { font-size: 11px; color: var(--muted); margin-top: 4px; word-break: break-all; }
+  textarea { width: 100%; background: var(--panel2); border: 1px solid var(--line); color: var(--text);
+    padding: 10px 12px; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; }
+  .chat-history { display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto;
+    padding: 4px 2px; }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; white-space: pre-wrap; word-break: break-word; font-size: 14px; line-height: 1.45; }
+  .msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.assistant { align-self: flex-start; background: var(--panel2); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .msg .meta { display: block; font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .msg.typing { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+
+<header id="header" class="hidden">
+  <div class="nav-row">
+    <div class="nav-left">
+      <img id="header-logo" class="logo hidden" src="/logo" alt="logo" onerror="this.classList.add('hidden')">
+      <div>
+        <h1 id="brand">VProvider</h1>
+        <div class="sub" id="brand-sub">Yerel Yapay Zeka Sunucusu</div>
+      </div>
+    </div>
+    <nav class="nav-tabs" id="main-tabs">
+      <div class="tab" id="tab-models" onclick="switchTab('models')">Modeller</div>
+      <div class="tab" id="tab-chat" onclick="switchTab('chat')">Sohbet</div>
+      <div class="tab" id="tab-apis" onclick="switchTab('apis')">API</div>
+    </nav>
+    <div class="nav-right">
+      <span class="muted" id="user-label"></span>
+      <button class="btn" onclick="logout()">Çıkış</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Kayıt (yalnızca sistemde hiç kullanıcı yokken gösterilir) -->
+  <section id="view-setup" class="auth-wrap hidden">
+    <img class="auth-logo" src="/logo" alt="logo" onerror="this.className='auth-logo hidden'">
+    <div class="card">
+      <div class="field">
+        <label>Kullanıcı Adı</label>
+        <input type="text" id="setup-user" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Şifre (en az 8 karakter)</label>
+        <input type="password" id="setup-pass" autocomplete="new-password">
+      </div>
+      <button class="btn primary" style="width:100%; margin-top:6px;" onclick="submitSetup()">Kayıt Ol</button>
+    </div>
+    <div class="auth-corner">
+      <a id="corner-github" href="https://github.com" target="_blank" rel="noopener" title="GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+      <a id="corner-fav" href="#" target="_blank" rel="noopener" title="Üretici Firma">
+        <img class="fav" src="/favicon.ico" alt="favicon" onerror="this.parentElement.classList.add('hidden')">
+      </a>
+    </div>
+    <div class="auth-copy">
+      &copy; <span id="auth-year"></span>
+      <a id="auth-company" href="https://veriussu.com" target="_blank" rel="noopener">Veriüssü</a>
+      &mdash; Tüm hakları saklıdır.
+    </div>
+  </section>
+
+  <!-- Giriş -->
+  <section id="view-login" class="auth-wrap hidden">
+    <img class="auth-logo" src="/logo" alt="logo" onerror="this.className='auth-logo hidden'">
+    <div class="card">
+      <div class="field">
+        <label>Kullanıcı Adı</label>
+        <input type="text" id="login-user" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Şifre</label>
+        <input type="password" id="login-pass" autocomplete="current-password">
+      </div>
+      <button class="btn primary" style="width:100%; margin-top:6px;" onclick="submitLogin()">Giriş Yap</button>
+    </div>
+    <div class="auth-corner">
+      <a id="corner-github" href="https://github.com" target="_blank" rel="noopener" title="GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+      <a id="corner-fav" href="#" target="_blank" rel="noopener" title="Üretici Firma">
+        <img class="fav" src="/favicon.ico" alt="favicon" onerror="this.parentElement.classList.add('hidden')">
+      </a>
+    </div>
+    <div class="auth-copy">
+      &copy; <span id="auth-year"></span>
+      <a id="auth-company" href="https://veriussu.com" target="_blank" rel="noopener">Veriüssü</a>
+      &mdash; Tüm hakları saklıdır.
+    </div>
+  </section>
+
+  <!-- Ana uygulama -->
+  <section id="view-app" class="hidden">
+
+    <!-- Modeller -->
+    <div id="tabpanel-models">
+      <div class="page-head">
+        <h2>Modeller</h2>
+        <button class="btn primary" onclick="openAddModel()">＋ Ekle</button>
+      </div>
+      <div id="model-list"></div>
+    </div>
+
+    <!-- Sohbet (modeli test et) -->
+    <div id="tabpanel-chat" class="hidden">
+      <div class="card">
+        <h2>Sohbet Testi
+          <span id="chat-state" class="muted"></span>
+        </h2>
+        <div class="row" style="align-items:center; margin-bottom:10px;">
+          <div class="field" style="margin:0; flex:3;">
+            <label>Model</label>
+            <select id="chat-model"></select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Sıcaklık</label>
+            <select id="chat-temp">
+              <option value="">varsayılan</option>
+              <option value="0.2">0.2 (kesin)</option>
+              <option value="0.7">0.7 (dengeli)</option>
+              <option value="1.0">1.0 (yaratıcı)</option>
+            </select>
+          </div>
+          <button class="btn" onclick="clearChat()" style="margin-top:18px;">Temizle</button>
+        </div>
+        <div id="chat-history" class="chat-history"></div>
+        <div class="row" style="margin-top:10px;">
+          <textarea id="chat-input" rows="2" placeholder="Modelle konuşmaya başla..."></textarea>
+          <button class="btn primary" id="btn-chat" onclick="sendChat()">Gönder</button>
+        </div>
+        <div class="warn-label" role="note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Bu sohbet yalnızca modellerin çalıştığını <strong>test etmek</strong> içindir. Yanıtlar gerçek
+          bilgiye dayanmaz; içerik ve doğruluk garantisi beklenmez.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Görsel Üretim (ComfyUI) -->
+    <div id="tabpanel-comfy" class="hidden">
+      <div class="card">
+        <h2>Görsel Üretim
+          <span id="comfy-badge" class="badge off">Durum sorgulanıyor...</span>
+        </h2>
+        <p class="muted" id="comfy-info" style="margin-bottom:10px;">
+          ComfyUI köprüsü üzerinden üretim. Motor (ComfyUI) ayrı bir süreçte çalışır; LLM
+          kullanımdan hemen sonra GPU'yu bırakır, böylece görsel üretim alanı rahatlar.
+        </p>
+        <div class="comfy-grid">
+          <div class="field" style="flex:2;">
+            <label>Prompt</label>
+            <textarea id="img-prompt" rows="3" placeholder="Üretmek istediğin sahneyi tarif et..."></textarea>
+          </div>
+          <div class="field" style="flex:1;">
+            <label>Negatif Prompt</label>
+            <textarea id="img-neg" rows="3" placeholder="İstemediğin öğeler (boş bırakılabilir)"></textarea>
+          </div>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>Checkpoint</label><select id="img-ckpt"><option value="">-</option></select></div>
+          <div class="field"><label>Boyut</label>
+            <select id="img-size">
+              <option value="512x512">512x512</option>
+              <option value="768x768">768x768</option>
+              <option value="512x768">512x768</option>
+              <option value="768x512">768x512</option>
+              <option value="1024x1024">1024x1024</option>
+            </select>
+          </div>
+          <div class="field"><label>Adet</label>
+            <select id="img-n">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="align-items:flex-end;">
+          <div class="field"><label>Seed (-1 = rastgele)</label><input type="number" id="img-seed" value="-1" style="width:140px;"></div>
+          <button class="btn primary" id="btn-comfy" onclick="generateComfy()">Üret</button>
+        </div>
+        <div id="comfy-result" class="comfy-grid"></div>
+      </div>
+    </div>
+
+    <!-- Video Üretim (ComfyUI + AnimateDiff) -->
+    <div id="tabpanel-video" class="hidden">
+      <div class="card">
+        <h2>Video Üretim
+          <span id="vid-badge" class="badge off">Durum sorgulanıyor...</span>
+        </h2>
+        <p class="muted" style="margin-bottom:10px;">
+          ComfyUI'deki AnimateDiff (txt2video) ile kısa animasyon üretir; kareler
+          sunucuda GIF'e birleştirilir. 8 GB VRAM için 512x512 ve 16-24 kare
+          önerilir.
+        </p>
+        <div class="field">
+          <label>Prompt (hareketi tarif edin)</label>
+          <textarea id="vid-prompt" rows="3" placeholder="Örn: mavi gökyüzünde süzülen beyaz bulutlar..."></textarea>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>Checkpoint</label><select id="vid-ckpt"><option value="">-</option></select></div>
+          <div class="field"><label>Boyut</label>
+            <select id="vid-size">
+              <option value="512x512">512x512</option>
+              <option value="512x768">512x768</option>
+              <option value="768x512">768x512</option>
+              <option value="640x640">640x640</option>
+            </select>
+          </div>
+          <div class="field"><label>Kare sayısı</label>
+            <select id="vid-frames">
+              <option value="16">16 (hızlı)</option>
+              <option value="24">24 (orta)</option>
+              <option value="32">32 (ağır)</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="align-items:flex-end;">
+          <div class="field"><label>Seed (-1 = rastgele)</label><input type="number" id="vid-seed" value="-1" style="width:140px;"></div>
+          <button class="btn primary" id="btn-video" onclick="generateVideo()">Üret</button>
+        </div>
+        <div id="vid-result" class="comfy-grid"></div>
+      </div>
+    </div>
+
+    <!-- Ses Üretim (TTS) -->
+    <div id="tabpanel-tts" class="hidden">
+      <div class="card">
+        <h2>Ses Üretim
+          <span id="tts-badge" class="badge off">Durum sorgulanıyor...</span>
+        </h2>
+        <p class="muted" style="margin-bottom:10px;">
+          Metni konuşmaya çevirir (edge-tts, çevrimiçi motor). Internet bağlantısı
+          gerektirir; GPU kullanmaz.
+        </p>
+        <div class="grid3">
+          <div class="field"><label>Ses</label>
+            <select id="tts-voice">
+              <option value="tr-TR-EmelNeural">Emel (kadın)</option>
+              <option value="tr-TR-AhmetNeural">Ahmet (erkek)</option>
+            </select>
+          </div>
+          <div class="field"><label>Hız</label>
+            <select id="tts-speed">
+              <option value="1.0">Normal</option>
+              <option value="0.8">Yavaş</option>
+              <option value="1.2">Hızlı</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Metin</label>
+          <textarea id="tts-text" rows="4" placeholder="Okunacak metni buraya yazın, örn: Merhaba! Bugün hava güzel."></textarea>
+        </div>
+        <div class="row" style="align-items:flex-end;">
+          <button class="btn primary" id="btn-tts" onclick="generateSpeech()">Konuştur</button>
+        </div>
+        <div id="tts-result" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- API Anahtarları -->
+    <div id="tabpanel-apis" class="hidden">
+      <div class="card">
+        <h2>API Anahtarları</h2>
+        <p class="muted" style="margin-bottom:10px;">
+          OpenAI uyumlu <code>/v1/*</code> uç noktaları bu anahtarlarla korunur.
+          Her isteğe <code>Authorization: Bearer &lt;anahtar&gt;</code> başlığıyla gönderin.
+        </p>
+        <div id="api-key-list" class="muted">Yükleniyor...</div>
+      </div>
+
+      <div class="card">
+        <h2>Yeni Anahtar</h2>
+        <div class="row" style="align-items:flex-end;">
+          <div class="field" style="flex:2;">
+            <label>Anahtar Adı</label>
+            <input type="text" id="api-name" placeholder="örn. Chatbox, Sunucu-1, Test">
+          </div>
+          <button class="btn primary" onclick="createApi()">Oluştur</button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<div id="toast" class="toast hidden"></div>
+
+<div id="modal-add" class="modal-overlay hidden" onclick="closeAddModelOnBg(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Model Ekle</h3>
+      <button class="modal-x" onclick="closeAddModel()" title="Kapat">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="search-row">
+        <input type="search" id="add-q" placeholder="Modeller içinde ara... örn. qwen3" oninput="renderAddModels()">
+        <select id="add-cat" onchange="renderAddModels()">
+          <option value="">Tümü</option>
+          <option value="text-generation">Metin Üretimi</option>
+          <option value="text2text-generation">Metin→Metin</option>
+          <option value="text-classification">Metin Sınıflandırma</option>
+          <option value="image-text-to-text">Görsel→Metin</option>
+          <option value="image-to-image">Görsel→Görsel</option>
+          <option value="text-to-audio">Metin→Ses</option>
+        </select>
+        <button class="btn primary" onclick="searchAddModels()">Ara</button>
+      </div>
+      <div id="add-results" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+
+// ---------- genel yardımcılar ----------
+async function api(path, options = {}) {
+  const resp = await fetch(path, options);
+  let body = null;
+  try { body = await resp.json(); } catch (e) { body = null; }
+  if (!resp.ok) {
+    const msg = (body && body.detail) ? (typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail))
+                                       : ("İstek başarısız (" + resp.status + ")");
+    throw new Error(msg);
+  }
+  return body;
+}
+
+let toastTimer = null;
+function toast(msg, ok = true) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.style.borderColor = ok ? "var(--ok)" : "var(--err)";
+  el.classList.remove("hidden");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add("hidden"), 4000);
+}
+
+function fmtBytes(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + " GB";
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + " MB";
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + " KB";
+  return n + " B";
+}
+
+function show(view) {
+  ["view-setup", "view-login", "view-app"].forEach((v) => $(v).classList.toggle("hidden", v !== view));
+  $("header").classList.toggle("hidden", view !== "view-app");
+}
+function switchTab(name) {
+  if (!["models", "chat", "apis"].includes(name)) return;
+  $("tab-models").classList.toggle("active", name === "models");
+  $("tab-chat").classList.toggle("active", name === "chat");
+  $("tab-apis").classList.toggle("active", name === "apis");
+  $("tabpanel-models").classList.toggle("hidden", name !== "models");
+  $("tabpanel-chat").classList.toggle("hidden", name !== "chat");
+  $("tabpanel-apis").classList.toggle("hidden", name !== "apis");
+  if (name === "chat") loadChatModels();
+  if (name === "apis") loadApis();
+}
+
+// ---------- ComfyUI görsel üretim ----------
+async function loadComfyInfo() {
+  const badge = $("comfy-badge");
+  const info = $("comfy-info");
+  try {
+    const st = await api("/panel/comfy/status");
+    if (!st.enabled) {
+      badge.textContent = "Modül kapalı";
+      badge.className = "badge off";
+      info.textContent = "Köprü genel olarak kapalı (COMFYUI_ENABLED=false). .env içinde açıp yeniden başlatın.";
+      $("btn-comfy").disabled = true;
+      return;
+    }
+    if (!st.ok) {
+      badge.textContent = "Motor yanıt vermiyor";
+      badge.className = "badge off";
+      info.textContent = "ComfyUI çalışmıyor veya erişilemiyor (" + (st.error || "bilinmeyen hata") + ").";
+      $("btn-comfy").disabled = true;
+      return;
+    }
+    badge.textContent = "Motor çalışıyor";
+    badge.className = "badge on";
+    info.textContent = (st.gpu ? st.gpu + " · " : "") + "VRAM ≈ " + (st.vram_mb || "?") + " MB" +
+      " · Köprü bağlantısı harici bir süreçte (ComfyUI) sağlanır.";
+    $("btn-comfy").disabled = false;
+    loadComfyCheckpoints();
+  } catch (err) {
+    badge.textContent = "Durum alınamadı";
+    badge.className = "badge off";
+    info.textContent = err.message;
+  }
+}
+
+async function loadComfyCheckpoints() {
+  try {
+    const body = await api("/panel/comfy/checkpoints");
+    const sel = $("img-ckpt");
+    sel.innerHTML = "";
+    (body.checkpoints || []).forEach((ck) => {
+      const opt = document.createElement("option");
+      opt.value = ck;
+      opt.textContent = ck;
+      sel.appendChild(opt);
+    });
+  } catch (err) {
+    // checkpoint listesi kritik değil; durum uyarısı zaten görülüyor
+  }
+}
+
+async function generateComfy() {
+  const btn = $("btn-comfy");
+  const result = $("comfy-result");
+  const prompt = $("img-prompt").value.trim();
+  if (!prompt) { toast("Lütfen bir prompt girin.", false); return; }
+  btn.disabled = true;
+  result.innerHTML = '<p class="muted">Üretim sürüyor... (8 GB VRAM ile kısa modeller daha hızlıdır)</p>';
+  try {
+    const body = await api("/panel/comfy/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt: prompt,
+        negative_prompt: $("img-neg").value.trim(),
+        checkpoint: $("img-ckpt").value,
+        size: $("img-size").value,
+        n: parseInt($("img-n").value, 10),
+        seed: parseInt($("img-seed").value, 10),
+      }),
+    });
+    result.innerHTML = "";
+    (body.images || []).forEach((img, i) => {
+      const fig = document.createElement("figure");
+      const pic = document.createElement("img");
+      pic.src = img.url;
+      pic.alt = "Üretilen görsel " + (i + 1);
+      fig.appendChild(pic);
+      const cap = document.createElement("figcaption");
+      cap.textContent = `#${i + 1} · ${body.prompt_id}`;
+      fig.appendChild(cap);
+      result.appendChild(fig);
+    });
+    toast("Üretim tamamlandı");
+  } catch (err) {
+    result.innerHTML = "";
+    toast(err.message, false);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ---------- ComfyUI video üretim (AnimateDiff) ----------
+async function loadVideoInfo() {
+  const badge = $("vid-badge");
+  const btn = $("btn-video");
+  try {
+    const st = await api("/panel/comfy/status");
+    if (!st.enabled) {
+      badge.textContent = "Modül kapalı";
+      badge.className = "badge off";
+      btn.disabled = true;
+      return;
+    }
+    if (!st.ok) {
+      badge.textContent = "Motor yanıt vermiyor";
+      badge.className = "badge off";
+      btn.disabled = true;
+      return;
+    }
+    badge.textContent = (st.gpu || "Motor çalışıyor");
+    badge.className = "badge on";
+    btn.disabled = false;
+    loadVideoCheckpoints();
+  } catch (err) {
+    badge.textContent = "Durum alınamadı";
+    badge.className = "badge off";
+    btn.disabled = true;
+  }
+}
+
+async function loadVideoCheckpoints() {
+  try {
+    const body = await api("/panel/comfy/checkpoints");
+    const sel = $("vid-ckpt");
+    sel.innerHTML = "";
+    (body.checkpoints || []).forEach((ck) => {
+      const opt = document.createElement("option");
+      opt.value = ck;
+      opt.textContent = ck;
+      sel.appendChild(opt);
+    });
+  } catch (err) { /* kritik değil */ }
+}
+
+async function generateVideo() {
+  const btn = $("btn-video");
+  const result = $("vid-result");
+  const prompt = $("vid-prompt").value.trim();
+  if (!prompt) { toast("Lütfen bir prompt girin.", false); return; }
+  btn.disabled = true;
+  result.innerHTML = '<p class="muted">Video üretimi sürüyor... (kare başına 2-5 sn, toplam birkaç dakika)</p>';
+  try {
+    const body = await api("/panel/video/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt: prompt,
+        checkpoint: $("vid-ckpt").value,
+        size: $("vid-size").value,
+        frames: parseInt($("vid-frames").value, 10),
+        seed: parseInt($("vid-seed").value, 10),
+      }),
+    });
+    result.innerHTML = "";
+    const fig = document.createElement("figure");
+    const pic = document.createElement("img");
+    pic.src = body.url;
+    pic.alt = "Üretilen video";
+    fig.appendChild(pic);
+    const cap = document.createElement("figcaption");
+    cap.textContent = `${body.width}x${body.height} · ${body.frames} kare · ${body.prompt_id}`;
+    fig.appendChild(cap);
+    result.appendChild(fig);
+    toast("Video üretim tamamlandı");
+  } catch (err) {
+    result.innerHTML = "";
+    toast(err.message, false);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ---------- Ses üretim (TTS) ----------
+async function loadTtsInfo() {
+  const badge = $("tts-badge");
+  const btn = $("btn-tts");
+  try {
+    const st = await api("/panel/tts/status");
+    if (!st.enabled) {
+      badge.textContent = "Modül kapalı";
+      badge.className = "badge off";
+      btn.disabled = true;
+      return;
+    }
+    if (st.engine_installed === false) {
+      badge.textContent = "Motor kurulu değil";
+      badge.className = "badge off";
+      btn.disabled = true;
+      return;
+    }
+    badge.textContent = `${st.engine} · ${st.voice}`;
+    badge.className = "badge on";
+    btn.disabled = false;
+  } catch (err) {
+    badge.textContent = "Durum alınamadı";
+    badge.className = "badge off";
+    btn.disabled = true;
+  }
+}
+
+async function generateSpeech() {
+  const btn = $("btn-tts");
+  const result = $("tts-result");
+  const text = $("tts-text").value.trim();
+  if (!text) { toast("Lütfen bir metin girin.", false); return; }
+  btn.disabled = true;
+  result.innerHTML = '<p class="muted">Seslendiriliyor...</p>';
+  try {
+    const body = await api("/panel/tts/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: text,
+        voice: $("tts-voice").value,
+        speed: parseFloat($("tts-speed").value),
+      }),
+    });
+    result.innerHTML = "";
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.src = body.url;
+    result.appendChild(audio);
+    toast("Ses üretildi");
+  } catch (err) {
+    result.innerHTML = "";
+    toast(err.message, false);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ---------- başlangıç ----------
+async function boot() {
+  try {
+    const status = await api("/panel/status");
+    applyAuthFooter(status.site);
+    // Kayıt sayfası yalnızca sistemde hiç kullanıcı yokken gösterilir.
+    // Eski backend'de needs_setup yoksa setup_done=0 (henüz kullanıcı yok) anlamına gelir.
+    const needsSetup = status.needs_setup === true
+      || (status.needs_setup === undefined && status.setup_done === false);
+    if (needsSetup) { show("view-setup"); return; }
+    const me = await api("/panel/me");
+    $("user-label").textContent = me.user;
+    $("brand").textContent = me.site.project_name;
+    if (me.site.has_logo) $("header-logo").classList.remove("hidden");
+    show("view-app");
+    switchTab("models");
+    loadModels();
+    loadApis();
+  } catch (e) {
+    show("view-login");
+  }
+}
+
+// ---------- kayıt/giriş alt bilgisi ----------
+function applyAuthFooter(site) {
+  const year = String(new Date().getFullYear());
+  document.querySelectorAll("#auth-year").forEach((el) => (el.textContent = year));
+  const githubUrl = (site && site.github_url) ? site.github_url : "https://github.com";
+  document.querySelectorAll("#corner-github").forEach((a) => (a.href = githubUrl));
+  document.querySelectorAll("#corner-fav").forEach((a) =>
+    a.classList.toggle("hidden", !site || !site.developer_domain));
+  if (site && site.developer_domain)
+    document.querySelectorAll("#corner-fav").forEach((a) => (a.href = site.developer_domain));
+}
+
+// ---------- kurulum / giriş / çıkış ----------
+async function submitSetup() {
+  const body = {
+    username: $("setup-user").value.trim(),
+    password: $("setup-pass").value,
+  };
+  try {
+    await api("/panel/setup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    toast("Kayıt tamamlandı. Hoş geldiniz!");
+    boot();
+  } catch (e) { toast(e.message, false); }
+}
+
+async function submitLogin() {
+  const body = { username: $("login-user").value.trim(), password: $("login-pass").value };
+  try {
+    await api("/panel/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    boot();
+  } catch (e) { toast(e.message, false); }
+}
+
+async function logout() {
+  try { await api("/panel/logout", { method: "POST" }); } catch (e) { /* zaten çıkılmış */ }
+  $("login-user").value = ""; $("login-pass").value = "";
+  show("view-login");
+}
+
+// ---------- sohbet ----------
+const chatLog = [];  // {role, content} dizisi -> her istekle birlikte gönderilir
+
+async function loadChatModels() {
+  try {
+    const data = await api("/panel/models");
+    const sel = $("chat-model");
+    const prev = sel.value;
+    sel.innerHTML = "";
+    if (!data.models.length) {
+      sel.innerHTML = '<option value="">(model yok)</option>';
+      $("chat-state").textContent = "Önce bir model indirin.";
+      return;
+    }
+    data.models.forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = m.id + (m.loaded ? "  (bellekte)" : "");
+      sel.appendChild(opt);
+    });
+    if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
+    const m = data.models.find((x) => x.id === sel.value);
+    $("chat-state").textContent = m ? (m.loaded ? "bellekte" : "ilk mesajda yüklenecek") : "";
+  } catch (e) { $("chat-state").textContent = "Model listesi alınamadı."; }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function appendMsg(role, content, meta) {
+  const el = document.createElement("div");
+  el.className = "msg " + role;
+  el.textContent = content;
+  if (meta) { const span = document.createElement("span"); span.className = "meta"; span.textContent = meta; el.appendChild(span); }
+  const hist = $("chat-history");
+  hist.appendChild(el);
+  hist.scrollTop = hist.scrollHeight;
+  return el;
+}
+
+function clearChat() {
+  chatLog.length = 0;
+  $("chat-history").innerHTML = "";
+  toast("Sohbet temizlendi.");
+}
+
+async function sendChat() {
+  const input = $("chat-input");
+  const text = input.value.trim();
+  if (!text) return;
+  const model = $("chat-model").value;
+  if (!model) { toast("Önce bir model seçin.", false); return; }
+
+  const btn = $("btn-chat");
+  chatLog.push({ role: "user", content: text });
+  input.value = "";
+  appendMsg("user", text);
+  const typing = appendMsg("assistant", "düşünüyor...", null);
+  typing.classList.add("typing");
+  btn.disabled = true;
+
+  const body = { model, messages: chatLog };
+  const t = $("chat-temp").value;
+  if (t !== "") body.temperature = parseFloat(t);
+
+  try {
+    const r = await api("/panel/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    chatLog.push({ role: "assistant", content: r.message });
+    const usage = r.usage && (r.usage.prompt_tokens != null)
+      ? `giden ${r.usage.prompt_tokens} · gelen ${r.usage.completion_tokens ?? 0} token · ${r.usage.total_tokens ?? 0} toplam`
+      : "";
+    typing.classList.remove("typing");
+    typing.textContent = r.message;
+    if (usage) { const span = document.createElement("span"); span.className = "meta"; span.textContent = usage; typing.appendChild(span); }
+    $("chat-state").textContent = r.model;
+    loadChatModels();  // bellek/badge durumu güncellensin
+  } catch (e) {
+    typing.classList.remove("typing");
+    typing.textContent = "Hata: " + e.message;
+    chatLog.pop();  // hatalı asistan kaydını geri al
+  } finally {
+    btn.disabled = false;
+    $("chat-history").scrollTop = $("chat-history").scrollHeight;
+  }
+}
+
+// ---------- modeller ----------
+const CATEGORY_LABELS = {
+  metin: "Metin", görsel: "Görsel", ses: "Ses", video: "Video", müzik: "Müzik",
+};
+
+const ICON_KEEP =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M6 3h12v3a5 5 0 0 1-3.5 4.75L13.5 11v4l1.5 3H9l1.5-3v-4l-1-.25A5 5 0 0 1 6 6V3z"/></svg>';
+const ICON_DYNAMIC =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+const ICON_DELETE =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+
+async function loadModels() {
+  const holder = $("model-list");
+  try {
+    const data = await api("/panel/models");
+    holder.innerHTML = "";
+    if (!data.models.length) {
+      holder.innerHTML = '<div class="empty-state"><div class="big">Burası boş</div><div class="muted">Henüz indirilmiş model yok.</div></div>';
+    } else {
+      data.models.forEach(renderModel);
+    }
+  } catch (e) {
+    holder.innerHTML = '<div class="empty-state"><div class="big">Burası boş</div><div class="muted">Model listesi alınamadı.</div></div>';
+  }
+  restoreDownloads();
+}
+
+function renderModel(m) {
+  const el = document.createElement("div");
+  el.className = "model";
+  const cat = CATEGORY_LABELS[m.category] || "Metin";
+  const keepActive = m.memory_mode === "keep" ? " active keep" : "";
+  const dynActive = m.memory_mode !== "keep" ? " active dynamic" : "";
+  el.innerHTML = `
+    <div class="info">
+      <span class="name">${escapeHtml(m.id)}</span>
+      <span class="meta">
+        <span class="mcat ${m.category || "metin"}">${cat}</span>
+        ${m.params ? '<span>' + escapeHtml(m.params) + " parametre</span>" : ""}
+        <span>${fmtBytes(m.size_bytes)}</span>
+        <span class="loaded-dot ${m.loaded ? "on" : "off"}" title="${m.loaded ? "Bellekte" : "Boşta"}"></span>
+      </span>
+    </div>
+    <div class="actions">
+      <button class="icon-btn${keepActive}" data-act="keep" title="Sürekli aktif">${ICON_KEEP}<span class="tip">Sürekli aktif</span></button>
+      <button class="icon-btn${dynActive}" data-act="dynamic" title="İstek ile aktif">${ICON_DYNAMIC}<span class="tip">İstek ile aktif</span></button>
+      <button class="icon-btn danger" data-act="delete" title="Modeli sil">${ICON_DELETE}<span class="tip">Modeli sil</span></button>
+    </div>`;
+  $("model-list").appendChild(el);
+  el.querySelector('[data-act="keep"]').addEventListener("click", () => modelAction("mode", m.id, "keep"));
+  el.querySelector('[data-act="dynamic"]').addEventListener("click", () => modelAction("mode", m.id, "dynamic"));
+  el.querySelector('[data-act="delete"]').addEventListener("click", async () => {
+    if (!confirm(m.id + " modelini diskten silmek istiyor musunuz?")) return;
+    try {
+      await api("/panel/models/" + encodeURIComponent(m.id) + "/delete", { method: "POST" });
+      toast(m.id + " silindi.");
+      loadModels();
+    } catch (e) { toast(e.message, false); }
+  });
+}
+
+async function modelAction(action, id, value) {
+  try {
+    await api("/panel/models/" + encodeURIComponent(id) + "/" + action,
+      { method: "POST", headers: { "Content-Type": "application/json" },
+        body: value === undefined ? undefined : JSON.stringify({ memory_mode: value }) });
+    toast(action === "mode" ? "Bellek modu güncellendi." : "İşlem tamam.");
+    loadModels();
+  } catch (e) { toast(e.message, false); }
+}
+
+// ---------- model ekleme (popup) ----------
+let addRepo = "";
+let addFiles = [];
+let browseModels = [];
+let browseLoaded = false;
+let downloadRows = {};   // repo_id -> { repo, row, bar, info, pct, timer }
+
+function openAddModel() {
+  $("add-results").innerHTML = "";
+  $("add-q").value = "";
+  $("modal-add").classList.remove("hidden");
+  $("add-q").focus();
+  renderAddModels();
+  if (!browseLoaded) loadBrowseModels().then(renderAddModels).catch(() => {});
+}
+
+function closeAddModel() { $("modal-add").classList.add("hidden"); }
+
+function closeAddModelOnBg(ev) { if (ev.target === ev.currentTarget) closeAddModel(); }
+
+async function loadBrowseModels() {
+  if (browseLoaded) return;
+  const box = $("add-results");
+  box.innerHTML = '<div class="muted">Tüm modeller yükleniyor... (ilk açılış birkaç saniye sürebilir)</div>';
+  try {
+    const data = await api("/panel/models/browse");
+    browseModels = data.models || [];
+    browseLoaded = true;
+  } catch (e) {
+    box.innerHTML = '<div class="empty">Modeller yüklenemedi.</div>';
+    throw e;
+  }
+}
+
+function renderAddModels() {
+  const q = $("add-q").value.trim().toLowerCase();
+  const cat = $("add-cat").value;
+  addRepo = "";
+  addFiles = [];
+  const box = $("add-results");
+  if (!browseLoaded) { box.innerHTML = '<div class="muted">Tüm modeller yükleniyor...</div>'; return; }
+  const list = browseModels.filter((r) => {
+    if (q && (r.repo_id || "").toLowerCase().indexOf(q) === -1) return false;
+    if (cat && !(r.pipeline || "").split(",").includes(cat)) return false;
+    return true;
+  });
+  if (!list.length) { box.innerHTML = '<div class="empty">Sonuç bulunamadı.</div>'; return; }
+  box.innerHTML = "";
+  list.forEach((r) => box.appendChild(repoCard(r)));
+}
+
+async function searchAddModels() {
+  if (!browseLoaded) {
+    await loadBrowseModels().catch(() => {});
+    if (!browseLoaded) return;
+  }
+  renderAddModels();
+}
+
+function repoCard(r) {
+  const el = document.createElement("div");
+  el.className = "hf-result";
+  el.innerHTML = `
+    <div class="hf-row">
+      <div>
+        <strong>${escapeHtml(r.repo_id)}</strong>
+        <div class="meta">${r.downloads.toLocaleString("tr-TR")} indirme &middot; ${r.likes} beğeni &middot; ${r.gguf_count} GGUF</div>
+      </div>
+      <span class="muted">Parametre seç →</span>
+    </div>
+    <div class="insparam"></div>`;
+  el.addEventListener("click", (ev) => {
+    if (ev.target.closest("button")) return;
+    if (ev.target.closest(".insparam")) return;
+    selectRepo(r, el);
+  });
+  return el;
+}
+
+async function selectRepo(r, el) {
+  if (el.classList.contains("selected")) {
+    const prog = el.querySelector('[data-role="prog"]');
+    if (prog && prog.children.length > 0) return;
+    el.classList.remove("selected");
+    el.querySelector(".insparam").innerHTML = "";
+    addRepo = "";
+    addFiles = [];
+    return;
+  }
+  document.querySelectorAll(".hf-result").forEach((x) => x.classList.remove("selected"));
+  el.classList.add("selected");
+  const slot = el.querySelector(".insparam");
+  slot.innerHTML = '<div class="muted">Parametreler yükleniyor...</div>';
+  addRepo = "";
+  addFiles = [];
+  try {
+    const data = await api("/panel/models/repo-files?repo=" + encodeURIComponent(r.repo_id));
+    renderParamPanel(r.repo_id, data.files, slot);
+  } catch (e) { slot.innerHTML = ""; toast(e.message, false); }
+}
+
+function renderParamPanel(repo_id, files, slot) {
+  addRepo = repo_id;
+  addFiles = files;
+  if (!files.length) {
+    slot.innerHTML = '<div class="empty">Bu repo\'da GGUF dosyası bulunamadı.</div>';
+    return;
+  }
+  const opts = files.map((f, i) => `
+    <label class="param-opt${i === 0 ? " active" : ""}">
+      <input type="radio" name="param" value="${escapeHtml(f.filename)}" ${i === 0 ? "checked" : ""}>
+      <span class="pname">${escapeHtml(f.filename)}</span>
+      <span class="psize">${fmtBytes(f.size_bytes)}</span>
+      ${f.filename.indexOf("Q4_K_M") !== -1 ? '<span class="reco">önerilen</span>' : ""}
+    </label>`).join("");
+  slot.innerHTML = `
+    <div class="param-panel">
+      <div class="sel-repo">${escapeHtml(repo_id)}</div>
+      ${opts}
+      <button class="btn primary" style="width:100%; margin-top:4px;" data-role="kur" onclick="installSelected()">İndir</button>
+      <div class="dl-progress" data-role="prog"></div>
+    </div>`;
+  slot.querySelectorAll(".param-opt").forEach((l) => l.addEventListener("click", () => {
+    slot.querySelectorAll(".param-opt").forEach((x) => x.classList.remove("active"));
+    l.classList.add("active");
+    l.querySelector("input").checked = true;
+  }));
+}
+
+async function installSelected() {
+  const card = document.querySelector(".hf-result.selected");
+  if (!card || !addRepo || !addFiles.length) { toast("Önce bir model seçin.", false); return; }
+  const sel = card.querySelector('input[name="param"]:checked');
+  const filename = sel ? sel.value : null;
+  const file = addFiles.find((f) => f.filename === filename);
+  if (!filename || !file) { toast("Bir parametre seçin.", false); return; }
+  const repo_id = addRepo;
+
+  const kurBtn = card.querySelector('[data-role="kur"]');
+  const options = card.querySelectorAll(".param-opt");
+  kurBtn.disabled = true;
+  kurBtn.textContent = "İndiriliyor...";
+  options.forEach((o) => { o.style.opacity = ".5"; o.style.pointerEvents = "none"; });
+  try {
+    await api("/panel/models/download", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ repo_id, filename }) });
+    addRepo = "";
+    addFiles = [];
+    closeAddModel();
+    const ui = addDownloadRow(repo_id, filename);
+    pollAddDownload(repo_id, ui);
+  } catch (e) {
+    kurBtn.disabled = false;
+    kurBtn.textContent = "İndir";
+    options.forEach((o) => { o.style.opacity = "1"; o.style.pointerEvents = "auto"; });
+    toast(e.message, false);
+  }
+}
+
+function addDownloadRow(repo_id, filename) {
+  if (downloadRows[repo_id]) return downloadRows[repo_id];
+  const holder = $("model-list");
+  const empty = holder.querySelector(".empty-state");
+  if (empty) empty.remove();
+  const row = document.createElement("div");
+  row.className = "model downloading";
+  row.innerHTML = `
+    <div class="info">
+      <span class="name">${escapeHtml(repo_id)}</span>
+      <span class="meta">${filename ? escapeHtml(filename) : "İndirme sürüyor..."}</span>
+    </div>
+    <div class="dlbox">
+      <div class="dl-row">
+        <span class="dl-info">Başlatılıyor...</span>
+        <span class="dl-pct">%0</span>
+        <div class="progress-track"><div class="progress-bar"></div></div>
+        <button class="btn" data-role="cancel">İptal</button>
+      </div>
+    </div>`;
+  holder.prepend(row);
+  row.querySelector('[data-role="cancel"]').addEventListener("click", async () => {
+    const btn = row.querySelector('[data-role="cancel"]');
+    btn.disabled = true;
+    btn.textContent = "İptal ediliyor...";
+    try {
+      await api("/panel/models/download/cancel", { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repo_id }) });
+    } catch (e) { toast(e.message, false); }
+  });
+  const ui = {
+    repo: repo_id,
+    row,
+    bar: row.querySelector(".progress-bar"),
+    info: row.querySelector(".dl-info"),
+    pct: row.querySelector(".dl-pct"),
+    btn: row.querySelector('[data-role="cancel"]'),
+  };
+  downloadRows[repo_id] = ui;
+  return ui;
+}
+
+async function restoreDownloads() {
+  let dl = {};
+  try { dl = await api("/panel/models/downloads"); } catch (e) { return; }
+  const active = Object.entries(dl)
+    .filter(([, s]) => s && (s.status === "baslıyor" || s.status === "indiriliyor"));
+  if (active.length) {
+    const empty = $("model-list").querySelector(".empty-state");
+    if (empty) empty.remove();
+  }
+  active.forEach(([repo]) => {
+    let ui = downloadRows[repo];
+    if (ui) {
+      if (!ui.row.isConnected) $("model-list").prepend(ui.row);
+      return;
+    }
+    ui = addDownloadRow(repo, "");
+    pollAddDownload(repo, ui);
+  });
+}
+
+function pollAddDownload(repo_id, ui) {
+  const timer = setInterval(async () => {
+    try {
+      const st = await api("/panel/models/download/status?repo_id=" + encodeURIComponent(repo_id));
+      const pct = st.total > 0 ? Math.min(100, (st.received / st.total) * 100) : 0;
+      ui.bar.style.width = pct.toFixed(1) + "%";
+      ui.pct.textContent = "%" + pct.toFixed(0);
+      const txt = (st.received != null && st.total != null)
+        ? fmtBytes(st.received) + " / " + fmtBytes(st.total || 0) : "";
+      if (st.status === "tamam" || st.status === "iptal" || st.status === "hata") {
+        clearInterval(timer);
+        delete downloadRows[repo_id];
+        if (ui.row.isConnected) ui.row.remove();
+        if (st.status === "tamam") {
+          toast("Model indirildi!");
+          loadModels();
+        } else if (st.status === "iptal") {
+          toast("İndirme iptal edildi.");
+          loadModels();
+        } else {
+          toast("Hata: " + (st.error || "bilinmiyor"), false);
+          loadModels();
+        }
+      } else {
+        ui.info.textContent = "İndiriliyor... " + txt;
+      }
+    } catch (e) { /* geçici hata: sürdür */ }
+  }, 1000);
+  ui.timer = timer;
+}
+
+// ---------- API anahtarları ----------
+async function loadApis() {
+  const list = $("api-key-list");
+  try {
+    const data = await api("/panel/apis");
+    const keys = data.keys || [];
+    if (!keys.length) {
+      list.innerHTML = '<p class="muted">Henüz anahtar yok. Aşağıdan ilk anahtarınızı oluşturun.</p>';
+      $("api-name").disabled = false;
+      return;
+    }
+    list.innerHTML = "";
+    keys.forEach((k) => {
+      const box = document.createElement("div");
+      box.className = "api-row";
+      box.innerHTML =
+        '<div class="api-meta">' +
+          '<span class="api-name">' + escapeHtml(k.name) + "</span>" +
+          '<span class="api-date muted">' + escapeHtml(String(k.created_at || "").slice(0, 19).replace("T", " ")) + "</span>" +
+        "</div>" +
+        '<div class="api-key">' + escapeHtml(k.key) + "</div>" +
+        '<div class="row" style="margin-top:6px;">' +
+          '<button class="btn" onclick="copyKey(\'' + k.id + '\')">Kopyala</button>' +
+          '<button class="btn danger" onclick="deleteApi(' + k.id + ')">Sil</button>' +
+        "</div>";
+      list.appendChild(box);
+    });
+  } catch (e) {
+    list.innerHTML = '<p class="muted">Anahtar listesi alınamadı: ' + escapeHtml(e.message) + "</p>";
+  }
+}
+
+async function copyKey(id) {
+  try {
+    const data = await api("/panel/apis");
+    const k = (data.keys || []).find((x) => String(x.id) === String(id));
+    if (!k) { toast("Anahtar bulunamadı.", false); return; }
+    await navigator.clipboard.writeText(k.key);
+    toast("API anahtarı kopyalandı.");
+  } catch (e) {
+    toast("Kopyalanamadı, manuel seçin.", false);
+  }
+}
+
+async function createApi() {
+  const input = $("api-name");
+  const name = input.value.trim();
+  if (!name) { toast("Önce anahtara bir ad verin.", false); return; }
+  try {
+    const data = await api("/panel/apis", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    input.value = "";
+    toast("" + data.key.name + " anahtarı oluşturuldu.");
+    loadApis();
+  } catch (e) { toast(e.message, false); }
+}
+
+async function deleteApi(id) {
+  if (!confirm("Bu API anahtarını silmek istiyor musunuz? Kullanan istemciler artık bağlanamaz.")) return;
+  try {
+    await api("/panel/apis/" + id, { method: "DELETE" });
+    toast("API anahtarı silindi.");
+    loadApis();
+  } catch (e) { toast(e.message, false); }
+}
+
+$("login-pass").addEventListener("keydown", (e) => { if (e.key === "Enter") submitLogin(); });
+$("setup-pass").addEventListener("keydown", (e) => { if (e.key === "Enter") submitSetup(); });
+$("add-q").addEventListener("keydown", (e) => { if (e.key === "Enter") searchAddModels(); });
+$("chat-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } });
+$("api-name").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); createApi(); } });
+
+boot();
+</script>
+</body>
+</html>
