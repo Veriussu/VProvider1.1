@@ -51,6 +51,14 @@ de HuggingFace'ten tek tıkla model indirir, bellek kullanımını yönetirsiniz
 
 ---
 
+## İletişim
+
+- **Web:** https://veriussu.com
+- **GitHub:** https://github.com/Veriussu/VProvider1.1
+- **E-posta:** vprovider@veriussu.com · info@veriussu.com
+
+---
+
 ## Hızlı Kurulum
 
 ```bash
