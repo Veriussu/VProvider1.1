@@ -20,13 +20,13 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from app.config import settings
+from app.config import SITE_IDENTITY, settings
 
 # Oturum geçerlilik süresi (gün)
 SESSION_TTL_DAYS = 7
 
 # Site bilgileri için varsayılanlar (ilk oluşturmada kullanılır)
-DEFAULT_PROJECT_NAME = "VProvider"
+
 
 # settings tablosundaki özel anahtarlar
 KEY_API_KEY = "api_key"
@@ -115,31 +115,6 @@ class UserStore:
                 created_at TEXT NOT NULL
             )
             """
-        )
-        self._run(
-            """
-            CREATE TABLE IF NOT EXISTS site_info (
-                id               INTEGER PRIMARY KEY CHECK (id = 1),
-                project_name     TEXT NOT NULL DEFAULT 'VProvider',
-                github_url       TEXT NOT NULL DEFAULT '',
-                developer_domain TEXT NOT NULL DEFAULT '',
-                docs_url         TEXT NOT NULL DEFAULT '',
-                contact_email    TEXT NOT NULL DEFAULT '',
-                logo             BLOB,
-                logo_mime        TEXT,
-                favicon          BLOB,
-                favicon_mime     TEXT,
-                updated_at       TEXT NOT NULL
-            )
-            """
-        )
-        # Varsayılan tek site_info satırı (her zaman id=1)
-        self._run(
-            """
-            INSERT OR IGNORE INTO site_info (id, project_name, updated_at)
-            VALUES (1, ?, ?)
-            """,
-            (DEFAULT_PROJECT_NAME, self._now()),
         )
         # Varsayılan ayar anahtarları: yalnızca YOKSA eklenir,
         # mevcut değerler (örn. API anahtarı) asla sıfırlanmaz
@@ -287,40 +262,12 @@ class UserStore:
     # ------------------------------------------------------------------
 
     def get_site_info(self) -> dict:
-        """Site bilgilerini sözlük olarak döner (id=1 satırı)."""
-        row = self._run(
-            "SELECT * FROM site_info WHERE id = 1",
-            fetch="one",
-        )
-        return dict(row) if row else {}
+        """Proje kimliğini döner.
 
-    def save_site_info(
-        self,
-        project_name: str,
-        github_url: str,
-        developer_domain: str,
-        docs_url: str,
-        contact_email: str,
-    ) -> None:
-        """Metin alanlarını günceller; logo/favicon'a dokunmaz."""
-        self._run(
-            """
-            UPDATE site_info
-            SET project_name = ?, github_url = ?, developer_domain = ?,
-                docs_url = ?, contact_email = ?, updated_at = ?
-            WHERE id = 1
-            """,
-            (project_name, github_url, developer_domain, docs_url, contact_email, self._now()),
-        )
-
-    def set_image(self, field: str, blob: bytes, mime: str) -> None:
-        """Logo veya favicon BLOB'unu günceller. field: 'logo' veya 'favicon'."""
-        if field not in ("logo", "favicon"):
-            raise ValueError("field yalnızca 'logo' veya 'favicon' olabilir")
-        self._run(
-            f"UPDATE site_info SET {field} = ?, {field}_mime = ?, updated_at = ? WHERE id = 1",
-            (blob, mime, self._now()),
-        )
+        Değerler DB'den değil, kod içine gömülü SITE_IDENTITY sabitinden
+        gelir; sistem ayarları değiştirilemez olarak tasarlanmıştır.
+        """
+        return dict(SITE_IDENTITY)
 
 
 # ------------------------------------------------------------------

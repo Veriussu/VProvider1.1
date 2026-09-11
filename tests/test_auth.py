@@ -145,31 +145,20 @@ def test_setup_done_flow(store):
 # ------------------------------------------------------------------
 
 def test_site_info_defaults(store):
-    """İlk açılışta site bilgileri varsayılan proje adıyla oluşur."""
+    """Site kimliği kod içine gömülü sabit değerlerden gelir."""
     info = store.get_site_info()
     assert info["project_name"] == "VProvider"
-    assert info["github_url"] == ""
+    assert info["github_url"] == "https://github.com/Veriussu/"
+    assert info["developer_domain"] == "https://veriussu.com"
+    assert info["contact_email"] == "vprovider@veriussu.com"
 
 
-def test_site_info_update_and_images(store):
-    """Site bilgileri güncellenir; logo ve favicon BLOB ile saklanıp okunur."""
-    store.save_site_info(
-        project_name="VProvider",
-        github_url="https://github.com/ornek/proje",
-        developer_domain="https://firma.com",
-        docs_url="https://docs.firma.com",
-        contact_email="destek@firma.com",
-    )
+def test_site_info_is_immutable(store):
+    """Sistem ayarları sabittir: store üzerinden değiştirilemez."""
     info = store.get_site_info()
-    assert info["github_url"] == "https://github.com/ornek/proje"
-    assert info["contact_email"] == "destek@firma.com"
-
-    # Logo ve favicon BLOB olarak saklanır
-    store.set_image("logo", b"\x89PNG-fake-logo", "image/png")
-    store.set_image("favicon", b"\x00\x00\x01\x00fake-ico", "image/x-icon")
-
-    info = store.get_site_info()
-    assert info["logo"] == b"\x89PNG-fake-logo"
-    assert info["logo_mime"] == "image/png"
-    assert info["favicon"] == b"\x00\x00\x01\x00fake-ico"
-    assert info["favicon_mime"] == "image/x-icon"
+    assert not hasattr(store, "save_site_info")
+    assert not hasattr(store, "set_image")
+    # Her çağrıda aynı sabit değerler döner
+    assert store.get_site_info() == info
+    assert info["project_name"] == "VProvider"
+    assert info["contact_email"] == "vprovider@veriussu.com"

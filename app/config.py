@@ -12,6 +12,20 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+# ─────────────────────────────────────────────────────────────
+#  SABİT SİTE KİMLİĞİ — kod içine gömülüdür, değiştirilemez.
+#  Projenin temel kimliği gibi düşünün: her kurulum aynı değerleri
+#  taşır, panelden/DB'den değiştirilmez ve .env'ye taşınmaz.
+# ─────────────────────────────────────────────────────────────
+SITE_IDENTITY: dict = {
+    "project_name": "VProvider",
+    "github_url": "https://github.com/Veriussu/",
+    "developer_domain": "https://veriussu.com",
+    "docs_url": "https://vprovider.veriussu.com/Docs",
+    "contact_email": "vprovider@veriussu.com",
+}
+
+
 class Settings(BaseSettings):
     """Uygulama geneli ayarlar. Değerler .env dosyasından gelir."""
 

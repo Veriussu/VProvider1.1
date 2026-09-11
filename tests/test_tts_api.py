@@ -111,7 +111,6 @@ def panel(tmp_path, monkeypatch):
     """Kullanıcı + giriş içeren panel müşterisi."""
     store = UserStore(tmp_path / "tts-panel.db")
     store.init()
-    store.save_site_info("Test", "", "", "", "test@ornek.com")
     store.mark_setup_done()
     store.set_api_key(TEST_API_KEY)
     from app.auth import hash_password

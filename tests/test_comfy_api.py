@@ -208,7 +208,6 @@ def panel(client, tmp_path, monkeypatch):
     """Panel için kullanıcı + giriş ekler."""
     store = UserStore(tmp_path / "comfy-panel.db")
     store.init()
-    store.save_site_info("Test", "", "", "", "test@ornek.com")
     store.mark_setup_done()
     store.set_api_key(TEST_API_KEY)
     from app.auth import hash_password

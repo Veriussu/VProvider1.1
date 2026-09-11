@@ -51,11 +51,14 @@ _STREAM_INTERVAL = 0.5
 # ------------------------------------------------------------------
 
 class SetupRequest(BaseModel):
-    """İlk kurulum: yönetici hesabı + proje adı."""
+    """İlk kurulum: yönetici hesabı.
+
+    Proje kimliği (ad, site bağlantıları, logo) kod içine gömülüdür;
+    bu nedenle kurulum yalnızca kullanıcı adı + şifre ister.
+    """
 
     username: str
     password: str
-    project_name: str = "VProvider"
 
 
 class LoginRequest(BaseModel):
@@ -239,13 +242,6 @@ def setup(req: SetupRequest, response: Response):
     if not store.create_user(username, password_hash):
         raise HTTPException(status_code=409, detail="Bu kullanıcı adı zaten kullanılıyor")
 
-    store.save_site_info(
-        project_name=req.project_name.strip() or "VProvider",
-        github_url="",
-        developer_domain="",
-        docs_url="",
-        contact_email="",
-    )
     store.mark_setup_done()
     if not store.list_api_keys() and not store.get_api_key():
         store.create_api_key("Varsayılan", generate_token())
@@ -300,11 +296,17 @@ def _user_of_session(session: dict) -> dict | None:
 
 
 def _site_brief(info: dict) -> dict:
-    """site_info satırından panelin ihtiyaç duyduğu kısa bilgiyi döner."""
+    """Proje kimliğinden panelin ihtiyaç duyduğu kısa bilgiyi döner.
+
+    Logo/favicon kod içine gömülü statik dosyalardır; SITE_IDENTITY
+    sabitinden gelen bilgi üzerine dosya varlığına göre eklenir.
+    """
+    logo_file = Path(__file__).resolve().parent.parent / "static" / "logo.png"
+    favicon_file = Path(__file__).resolve().parent.parent / "static" / "favicon.png"
     return {
         "project_name": info.get("project_name", "VProvider"),
-        "has_logo": bool(info.get("logo")),
-        "has_favicon": bool(info.get("favicon")),
+        "has_logo": info.get("has_logo", True if logo_file.exists() else False),
+        "has_favicon": info.get("has_favicon", True if favicon_file.exists() else False),
         "github_url": info.get("github_url", ""),
         "developer_domain": info.get("developer_domain", ""),
     }

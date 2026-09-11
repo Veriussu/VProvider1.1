@@ -108,21 +108,17 @@ def health():
 
 
 def serve_image(field: str, mime_default: str, name: str) -> Response:
-    """site_info tablosundan logo/favicon BLOB'unu okur ve görselleri döner.
+    """Logo/favicon görsellerini döner.
 
-    DB'de görsel yoksa (yeni kurulum, henüz yüklenmemiş) statik dosya
-    kullanılır; böylece panelden yükleme yapılmadan da logo görünür.
+    Görseller kod içine gömülü statik dosyalardan servis edilir; sistem
+    kimliği sabit olduğundan DB'den okunmaz (hangi kurulum olursa olsun
+    herkes aynı proje logosunu görür).
     """
-    info = get_store().get_site_info()
-    blob = info.get(field)
-    if not blob:
-        fallback = Path(STATIC_DIR) / f"{name}.png"
-        if fallback.exists():
-            mime = "image/x-icon" if name == "favicon" else "image/png"
-            return Response(content=fallback.read_bytes(), media_type=mime)
+    image_file = STATIC_DIR / f"{name}.png"
+    if not image_file.exists():
         return Response(status_code=status.HTTP_404_NOT_FOUND)
-    mime = info.get(f"{field}_mime") or mime_default
-    return Response(content=blob, media_type=mime)
+    mime = "image/x-icon" if name == "favicon" else mime_default
+    return Response(content=image_file.read_bytes(), media_type=mime)
 
 
 @app.get("/logo")

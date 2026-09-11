@@ -56,7 +56,6 @@ def _make_client(tmp_path, monkeypatch, with_user=True):
     store = UserStore(tmp_path / "panel.db")
     store.init()
     if with_user:
-        store.save_site_info("Test Panel", "", "", "", "test@ornek.com")
         store.mark_setup_done()
         store.set_api_key(TEST_API_KEY)
         _create_user(store)
@@ -97,7 +96,7 @@ def test_setup_creates_user_and_cookie(tmp_path, monkeypatch):
     """İlk kurulum kullanıcıyı oluşturur, oturumu çereze yazar, API anahtarı üretir."""
     client, store = _make_client(tmp_path, monkeypatch, with_user=False)
     resp = client.post("/panel/setup", json={
-        "username": "admin", "password": "guclu-sifre-1", "project_name": "VProvider Test",
+        "username": "admin", "password": "guclu-sifre-1",
     })
     assert resp.status_code == 200
     assert store.is_setup_done()
@@ -106,19 +105,20 @@ def test_setup_creates_user_and_cookie(tmp_path, monkeypatch):
     assert store.get_user_by_username("admin") is not None
     assert "vprovider_session" in client.cookies
     info = store.get_site_info()
-    assert info["project_name"] == "VProvider Test"
+    assert info["project_name"] == "VProvider"
+    assert info["github_url"] == "https://github.com/Veriussu/"
 
 
 def test_setup_rejected_when_done(tmp_path, monkeypatch):
     """Kurulum bir kez yapıldıysa ikinci deneme reddedilir."""
     client, _ = _make_client(tmp_path, monkeypatch)
-    resp = client.post("/panel/setup", json={"username": "x", "password": "y", "project_name": "z"})
+    resp = client.post("/panel/setup", json={"username": "x", "password": "y"})
     assert resp.status_code == 400
 
 
 def test_setup_weak_password_rejected(tmp_path, monkeypatch):
     client, _ = _make_client(tmp_path, monkeypatch, with_user=False)
-    resp = client.post("/panel/setup", json={"username": "admin", "password": "kisa", "project_name": "x"})
+    resp = client.post("/panel/setup", json={"username": "admin", "password": "kisa"})
     assert resp.status_code == 422
 
 
@@ -160,7 +160,7 @@ def test_panel_status_public(tmp_path, monkeypatch):
     assert body["needs_setup"] is False
     assert body["setup_done"] is True
     assert body["app"] == "VProvider"
-    assert body["site"]["project_name"] == "Test Panel"
+    assert body["site"]["project_name"] == "VProvider"
 
 
 def test_panel_status_needs_setup_when_no_user(tmp_path, monkeypatch):
@@ -179,7 +179,7 @@ def test_login_rejected_when_no_user(tmp_path, monkeypatch):
 def test_register_rejected_when_user_exists(tmp_path, monkeypatch):
     """Kullanıcı varken kayıt sayfası asla açılmamalı; /setup ikinci kez reddedilmeli."""
     client, _ = _make_client(tmp_path, monkeypatch)
-    resp = client.post("/panel/setup", json={"username": "ikinci", "password": "sifre-1234", "project_name": "VProvider"})
+    resp = client.post("/panel/setup", json={"username": "ikinci", "password": "sifre-1234"})
     assert resp.status_code == 400
     assert "kayıtlı" in resp.json()["detail"]
 
