@@ -7,9 +7,10 @@
 #            - /usr/local/bin altındaki vprovider-* bağlarını kaldırır
 #            - Sanal ortamı (.venv), Python önbelleklerini siler
 #            - data/ (veritabanı, kullanıcılar) ve runtime loglarını temizler
-#            - models/ korunur; "rm -rf" benzeri --all flağıyla silinir
-#  Kullanım: scripts/remove.sh        (modeller korunur)
-#            scripts/remove.sh --all  (modeller dahil her şey silinir)
+#            - Varsayılan: models/ ve kaynak kod korunur
+#            - --all: modeller + kaynak kod + .env dahil proje dizini silinir
+#  Kullanım: scripts/remove.sh        (modeller ve kod korunur)
+#            scripts/remove.sh --all  (projenin tamamı silinir)
 # ─────────────────────────────────────────────────────────────
 
 set -euo pipefail
@@ -19,7 +20,8 @@ SERVICE="vprovider.service"
 
 ALL="${1:-}"
 if [ "${ALL}" = "--all" ]; then
-  echo " ⚠  Tüm modeller de silinecek. 3 saniye içinde iptal için Ctrl+C."
+  echo " ⚠  Tüm modeller, kaynak kod, .env ve veriler silinecek."
+  echo "   3 saniye içinde iptal için Ctrl+C."
   sleep 3
 fi
 
@@ -58,12 +60,29 @@ mkdir -p "${PROJECT_ROOT}/data"
 touch "${PROJECT_ROOT}/data/.gitkeep"
 echo " ✓ data/ ve runtime logları temizlendi"
 
-# 5) Modeller (isteğe bağlı)
+# 5) Modeller ve proje dizini
 if [ "${ALL}" = "--all" ]; then
   rm -rf "${PROJECT_ROOT}/models"/* 2>/dev/null || true
   echo " ✓ models/ içeriği silindi"
+  # Güvenlik: proje dizinini kendimizi çalıştırarak değil, komut yoluyla sil
+  # (kendi dosyamız zaten çalışıyor; silmeyi en son adıma bırakırız)
 else
   echo " • models/ içeriği korundu (tam silme için: $0 --all)"
+fi
+
+# 6) Tüm proje dizinini kaldır (yalnızca --all)
+if [ "${ALL}" = "--all" ]; then
+  # Bulunduğumuz konum en az dosya sistemi kökü değilse güvenli olsun
+  if [ "${PROJECT_ROOT}" = "/" ]; then
+    echo " ✗ Güvenlik: proje kökü / olamaz; silme iptal edildi" >&2
+    exit 1
+  fi
+  # Önce çalışma dizinini dışarı al (kendimizi silerken ayakta kalalım)
+  cd /tmp
+  rm -rf "${PROJECT_ROOT}"
+  echo " ✓ Proje dizini silindi: ${PROJECT_ROOT}"
+else
+  echo " • Proje kaynak kodu korundu (kaldırmak için: $0 --all)"
 fi
 
 echo " ✓ VProvider kaldırma tamamlandı."

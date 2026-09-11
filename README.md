@@ -92,8 +92,8 @@ ilk açılışta kurulum sihirbazı yönetici hesabı ve API anahtarını üreti
 | `bash scripts/restart.sh` | Sunucuyu yeniden başlatır |
 | `bash scripts/download.sh org/model` | Repodaki GGUF dosyalarını listeler |
 | `bash scripts/download.sh org/model dosya.gguf` | Modeli `models/` altına indirir |
-| `scripts/remove.sh` | Sunucuyu, venv'i ve verileri tamamen kaldırır (modeller korunur) |
-| `scripts/remove.sh --all` | Modeller dahil her şeyi kaldırır |
+| `scripts/remove.sh` | Sunucuyu, venv'i ve verileri kaldırır (modeller + kaynak kod korunur) |
+| `scripts/remove.sh --all` | Projenin **tamamı** silinir: modeller, kaynak kod, `.env`, veriler |
 | `clear.sh` | `remove.sh` için geriye uyumlu takma ad |
 
 systemd kuruluysa scriptler `systemctl start/stop/restart vprovider` çağırır;
@@ -347,13 +347,13 @@ vprovider/
 ## Kaldırma
 
 ```bash
-bash scripts/remove.sh        # sunucu + venv + veriler kaldırılır, modeller kalır
-bash scripts/remove.sh --all  # modeller dahil her şey silinir
+bash scripts/remove.sh        # sunucu + venv + veriler kaldırılır; modeller ve kaynak kod kalır
+bash scripts/remove.sh --all  # projenin tamamı: modeller, kaynak kod, .env, veriler silinir
 ```
 
-Bu işlem systemd servisini, `/usr/local/bin` kısayollarını, `.venv`'i,
-`data/` içeriğini ve `runtime/` loglarını temizler; kaynak kodu ve `models/`
-klasörünü yerinde bırakır (`--all` ile o da silinir).
+İlki systemd servisini, `/usr/local/bin` kısayollarını, `.venv`'i, `data/` içeriğini ve
+`runtime/` loglarını temizler; kaynak kod ve `models/` yerinde kalır. `--all` ile diskten
+proje dizininin tamamı kaldırılır.
 
 ---
 
