@@ -13,8 +13,10 @@ de HuggingFace'ten tek tıkla model indirir, bellek kullanımını yönetirsiniz
 
 ## Özellikler
 
-- **OpenAI uyumlu API** — `/v1/models`, `/v1/chat/completions`, `/v1/completions`
-  (akışsız + SSE streaming, OpenAI hata yapısı)
+- **OpenAI uyumlu API** — `/v1/models`, `/v1/chat/completions`, `/v1/completions`,
+  `/v1/responses` (akışsız + SSE streaming, OpenAI hata yapısı)
+- **Function / tool calling** — chat ve responses uç noktalarında araç çağrısı,
+  `tool_choice` ve paralel tool call yanıtları
 - **Web yönetim paneli** — ilk kurulum sihirbazı, şifreli giriş (session cookie),
   model listesi, yükle/boşalt, bellek modu, silme
 - **HuggingFace entegrasyonu** — GGUF arama, dosya listeleme, kesintisiz devam
@@ -52,7 +54,7 @@ de HuggingFace'ten tek tıkla model indirir, bellek kullanımını yönetirsiniz
 ## Hızlı Kurulum
 
 ```bash
-git clone <bu-repo> vprovider && cd vprovider
+git clone https://github.com/Veriussu/VProvider1.1.git vprovider && cd vprovider
 bash install.sh
 ```
 
@@ -152,7 +154,8 @@ curl -N http://localhost:9055/v1/chat/completions \
 | Bölge | Yöntem | Yol | Açıklama |
 |---|---|---|---|
 | API | `GET` | `/v1/models` | Yüklü modellerin listesi |
-| API | `POST` | `/v1/chat/completions` | Chat (akışsız / SSE) |
+| API | `POST` | `/v1/chat/completions` | Chat (akışsız / SSE) — tool calling destekli |
+| API | `POST` | `/v1/responses` | OpenAI Responses API (Codex gibi araçlar için) |
 | API | `POST` | `/v1/completions` | Metin tamamlama |
 | API | `POST` | `/v1/images/generations` | Görsel üretim (ComfyUI), `url` veya `b64_json` |
 | API | `GET` | `/v1/images/file/{prompt_id}/{i}` | Üretilen görsel (API anahtarı gerekir) |
