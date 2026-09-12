@@ -18,6 +18,7 @@
 import gc
 import json
 import logging
+import os
 from typing import Iterable, Optional
 
 from app.gpu_detect import resolve_runtime
@@ -84,10 +85,15 @@ class LlamaCppEngine(LlamaEngine):
         context_size: int = 4096,
         gpu_layers: int = -1,
         threads: int = 0,
+        gpu_mode: str = "auto",
+        runtime_note: str = "",
     ) -> None:
         self.model_path = model_path
         self.context_size = context_size
         self.gpu_layers = gpu_layers
+        self.gpu_mode = gpu_mode
+        self.runtime_note = runtime_note
+        self.fallback_note = ""
         self.threads = threads
         self._llama = None        # llama_cpp.Llama örneği; yüklenene kadar None
         self.last_usage: dict = {}
@@ -95,7 +101,12 @@ class LlamaCppEngine(LlamaEngine):
         self.last_finish_reason: str = "stop"    # son chat'in bitiş nedeni
 
     def load(self) -> None:
-        """Modeli belleğe yükler. Aynı motor ikinci kez yüklenirse hızlıca döner."""
+        """Modeli belleğe yükler. Aynı motor ikinci kez yüklenirse hızlıca döner.
+
+        GPU offload denemesi başarısız olursa (ör. VRAM yetersiz) ve mod
+        'auto' ise otomatik olarak CPU'ya (gpu_layers=0) düşülür ve uyarı
+        fallback_note'a yazılır.
+        """
         if self._llama is not None:
             return
         from llama_cpp import Llama  # yalnızca bu anda içe aktarılır
@@ -107,7 +118,22 @@ class LlamaCppEngine(LlamaEngine):
             "n_threads": self.threads if self.threads > 0 else None,
             "verbose": False,
         }
-        self._llama = Llama(**kwargs)
+        try:
+            self._llama = Llama(**kwargs)
+        except Exception as exc:  # noqa: BLE001
+            auto_can_fallback = self.gpu_mode == "auto" and self.gpu_layers not in (0, -1)
+            if not auto_can_fallback:
+                raise
+            logger.warning(
+                "GPU offload başarısız (%s). CPU (gpu_layers=0) ile yeniden deneniyor: %s",
+                exc, self.runtime_note,
+            )
+            kwargs["n_gpu_layers"] = 0
+            self.gpu_layers = 0
+            self.fallback_note = (
+                f"GPU offload başarısızdı ({type(exc).__name__}); CPU'ya geçildi."
+            )
+            self._llama = Llama(**kwargs)
 
     def unload(self) -> None:
         """Modeli bellekten boşaltır; VRAM/RAM içeriği serbest bırakılır."""
@@ -298,6 +324,11 @@ def create_engine(model_path: str, **options) -> LlamaEngine:
 
     gpu_mode = options.pop("gpu_mode", "auto")
     model_size_bytes = options.pop("model_size_bytes", 0)
+    if not model_size_bytes:
+        try:
+            model_size_bytes = os.path.getsize(model_path)
+        except OSError:
+            model_size_bytes = 0
     requested_layers = options.get("gpu_layers", -1)
 
     runtime = resolve_runtime(
@@ -305,6 +336,7 @@ def create_engine(model_path: str, **options) -> LlamaEngine:
         requested_layers=requested_layers,
         model_path=model_path,
         model_size_bytes=model_size_bytes,
+        n_ctx=options.get("context_size", 4096),
     )
     options["gpu_layers"] = runtime.gpu_layers
     logger.info("GPU kararı: %s", runtime.note)
@@ -314,4 +346,12 @@ def create_engine(model_path: str, **options) -> LlamaEngine:
         ", ".join(runtime.compiled_backends),
         runtime.backend,
     )
-    return LlamaCppEngine(model_path, **options)
+    engine = LlamaCppEngine(
+        model_path,
+        context_size=options.get("context_size", 4096),
+        gpu_layers=runtime.gpu_layers,
+        threads=options.get("threads", 0),
+        gpu_mode=gpu_mode,
+        runtime_note=runtime.note,
+    )
+    return engine

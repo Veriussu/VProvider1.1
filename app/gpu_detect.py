@@ -339,28 +339,99 @@ def gguf_n_layers(model_path) -> Optional[int]:
     return None
 
 
+def gguf_kv_per_token_layer(model_path) -> Optional[float]:
+    """Bir katmanın KV önbelleğinin token başına bayt giderini tahmin eder.
+
+    kV hesabı: n_kv_heads x (key_length + value_length) bayt; varsayılan KV
+    türü Q8_0 (1 bayt) kabul edilir. GGUF'ta doğrudan anahtarlar yoksa
+    embedding_length / head_count üzerinden türetilir. Bilinemiyorsa None.
+    """
+    meta = gguf_meta(model_path)
+    if not meta:
+        return None
+    arch = meta.get("general.architecture")
+    suffix_sets = (
+        (".attention.head_count_kv", ".attention.key_length", ".attention.value_length"),
+        (".attention.head_count_kv", ".attention.key_length", ".attention.value_length"),
+        (".attention.head_count_kv", ".attention.key_length", ".attention.value_length"),
+    )
+
+    def _find(*suffixes):
+        for k in suffixes:
+            for prefix in (arch, "llama", "bert"):
+                value = meta.get(f"{prefix}{k}")
+                if isinstance(value, int) and value > 0:
+                    return value
+        return None
+
+    n_kv = _find(".attention.head_count_kv")
+    k_len = _find(".attention.key_length")
+    v_len = _find(".attention.value_length")
+    if (not k_len or not v_len) and n_kv:
+        emb = _find(".embedding_length")
+        heads = _find(".attention.head_count")
+        if emb and heads:
+            per_head = max(1, emb // heads)
+            k_len = k_len or per_head
+            v_len = v_len or per_head
+    if not n_kv or not k_len or not v_len:
+        return None
+    # KV başına bayt (Q8_0 varsayılanı); F16 KV için 2 kullanılmalıdır
+    kv_bytes_per_elem = 1.0
+    return kv_bytes_per_elem * n_kv * (k_len + v_len)
+
+
 # ─────────────────────────────────────────────
 # Katman sayısı otomatik hesabı (VRAM'e göre)
 # ─────────────────────────────────────────────
 
-def auto_gpu_layers(vram_free_mb: int, model_size_mb: int, n_layers: Optional[int] = None) -> int:
+def auto_gpu_layers(
+    vram_free_mb: int,
+    model_size_mb: int,
+    n_layers: Optional[int] = None,
+    kv_per_token_layer: Optional[float] = None,
+    n_ctx: int = 0,
+) -> int:
     """Boş VRAM'e göre güvenli gpu_layers değerini döndürür.
 
-    - VRAM/model bilinmiyorsa -> -1 (tümü, llama.cpp kendisi ayarlar).
-    - Boş VRAM model boyutunun ~1.5 katından fazlaysa -> -1 (hepsi sığar).
-    - Aksi halde VRAM'e sığan katman sayısını (en az 1) üretir.
+    Katman başına maliyet iki bölümden oluşur:
+      - ağırlıklar   : model boyutu / katman sayısı
+      - KV önbelleği : token başına katman KV gideri x context (n_ctx)
+    KV bilgisi GGUF'tan (kv_per_token_layer) gelir; bilinmiyorsa genel tahmin
+    (KV ~ model boyutu x n_ctx/65536) kullanılır. Compute/UB tamponu için
+    sabit bir pay (max ~512 MB veya %12) ayrılır.
     """
     if vram_free_mb <= 0 or model_size_mb <= 0:
         return -1
-    if vram_free_mb >= model_size_mb * 1.5:
-        return -1
     total_layers = n_layers if n_layers and n_layers > 0 else DEFAULT_GGUF_LAYERS
-    # Katman başına yaklaşık bellek gideri: model/katman * ~1.35 (compute + KV)
-    per_layer_mb = (model_size_mb * 1.35) / total_layers
-    count = int(vram_free_mb / per_layer_mb) if per_layer_mb > 0 else 0
-    if count >= total_layers:
+    weights_per_layer_mb = model_size_mb / total_layers
+    if kv_per_token_layer and n_ctx > 0:
+        kv_per_layer_mb = kv_per_token_layer * n_ctx / 1_000_000
+    else:
+        # Genel tahmin: 65536 bağlamda KV yaklaşık model boyutu ölçeğindedir
+        kv_per_layer_mb = weights_per_layer_mb * 1.25 * (n_ctx / 65536.0)
+    per_layer_mb = weights_per_layer_mb + kv_per_layer_mb
+    if per_layer_mb <= 0:
         return -1
-    return max(count, 1)
+    # Grafik/UB tamponları için kullanılabilir VRAM'in bir kısmı ayrılır.
+    # MoE/modern modellerde compute grafikleri beklenenden büyüktür.
+    graph_reserve_mb = max(1024, int(total_layers * 30), int(vram_free_mb * 0.10))
+    # Tüm katmanlar sığabilir mi? Fazladan emniyet payı dikkate alınarak.
+    total_weights_mb = total_layers * weights_per_layer_mb
+    total_kv_mb = total_layers * kv_per_layer_mb
+    total_needed_mb = total_weights_mb + total_kv_mb + graph_reserve_mb
+    if total_needed_mb <= vram_free_mb:
+        return -1  # tüm katmanlar VRAM'e sığıyor
+    available_mb = vram_free_mb - graph_reserve_mb
+    if available_mb <= 0:
+        return 0
+    count = int(available_mb / per_layer_mb)
+    # Anlamsız küçük offload'dan kaçın: katmanların ~%10'undan azı
+    # sığacaksa CPU'da kal (gpu_layers=0)
+    min_sensible = max(2, int(total_layers * 0.10))
+    if count < min_sensible:
+        return 0
+    return count
 
 
 # ─────────────────────────────────────────────
@@ -372,6 +443,7 @@ def resolve_runtime(
     requested_layers: int = -1,
     model_path: Optional[str] = None,
     model_size_bytes: int = 0,
+    n_ctx: int = 0,
 ) -> RuntimeInfo:
     """GPU_MODE/GPU_LAYERS ayarlarından nihai çalışma zamanı kararını üretir.
 
@@ -418,7 +490,14 @@ def resolve_runtime(
     layers = requested_layers
     if layers == -1:
         n_layers = gguf_n_layers(model_path) if model_path else None
-        layers = auto_gpu_layers(hw.vram_free_mb, model_size_bytes / 1_000_000, n_layers)
+        kv_per_token_layer = gguf_kv_per_token_layer(model_path) if model_path else None
+        layers = auto_gpu_layers(
+            hw.vram_free_mb,
+            model_size_bytes / 1_000_000,
+            n_layers,
+            kv_per_token_layer,
+            n_ctx,
+        )
 
     note = (
         f"{hw.vendor.upper()} GPU algılandı ({hw.name or 'bilinmiyor'}; boş VRAM "

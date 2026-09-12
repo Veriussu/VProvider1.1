@@ -93,6 +93,24 @@ def test_detect_order_nvidia_first(monkeypatch):
 # GGUF meta okuyucu
 # ─────────────────────────────────────────────
 
+def _make_gguf_bytes(kv_map: dict) -> bytes:
+    """Sözlüğü GGUF metadata'sına çevirir (str/i64 scalar desteklenir)."""
+    def _str(s):
+        b = s.encode()
+        return struct.pack("<Q", len(b)) + b
+
+    def _key(name, value):
+        if isinstance(value, str):
+            return _str(name) + struct.pack("<I", 8) + _str(value)
+        if isinstance(value, bool):
+            return _str(name) + struct.pack("<I", 7) + bytes([1 if value else 0])
+        return _str(name) + struct.pack("<I", 11) + struct.pack("<q", value)
+
+    body = b"".join(_key(k, v) for k, v in kv_map.items())
+    header = struct.pack("<II", 0x46554747, 3) + struct.pack("<Q", 0) + struct.pack("<Q", len(kv_map))
+    return header + body
+
+
 def _make_gguf(path, arch="llama", layers=42, with_array=True):
     """Başlık bloğunda metadata içeren küçük bir GGUF yazar."""
     def _str(s):
@@ -177,8 +195,52 @@ def test_auto_gpu_layers_partial():
 
 
 def test_auto_gpu_layers_tiny_vram():
-    """Çok az VRAM olsa bile en az 1 katman önerilmeli."""
-    assert auto_gpu_layers(vram_free_mb=64, model_size_mb=4360, n_layers=42) >= 1
+    """Çok az VRAM'de anlamsız küçük offload yerine CPU önerilmeli (0)."""
+    assert auto_gpu_layers(vram_free_mb=64, model_size_mb=4360, n_layers=42) == 0
+
+
+def test_auto_gpu_layers_kv_aware(monkeypatch, tmp_path):
+    """Büyük context'te KV önbelleği katman sayısını düşürmeli."""
+    N_CTX, KV_PTL = 65536, 2048
+    count = auto_gpu_layers(
+        vram_free_mb=5181, model_size_mb=4360, n_layers=42,
+        kv_per_token_layer=KV_PTL, n_ctx=N_CTX,
+    )
+    # KV dahil per-layer ~238 MB -> ~17-20 katman; tümüne (-1) ulaşılmamalı
+    assert 1 <= count < 42
+    # KV gideri olmadan hesaplama daha çok katmanı GPU'ya almalı (-1 = tümü)
+    no_kv = auto_gpu_layers(5181, 4360, 42, n_ctx=0)
+    assert count < (no_kv if no_kv > 0 else 42)
+
+
+# ─────────────────────────────────────────────
+# GGUF KV per-token hesabı
+# ─────────────────────────────────────────────
+
+def test_gguf_kv_per_token_layer(tmp_path):
+    """KV per-token-layer: n_kv_heads x (key+value) bayt hesaplanmalı."""
+    from app.gpu_detect import gguf_kv_per_token_layer
+
+    p = tmp_path / "m.gguf"
+    _make_gguf(p)
+    # _make_gguf'te attention anahtarı yok -> bilinemez
+    assert gguf_kv_per_token_layer(str(p)) is None
+
+    # Attention anahtarları eklenince: 1 * 2 * (512 + 512) = 2048
+    p2 = tmp_path / "attn.gguf"
+    _make_gguf(p2)
+    arch = "llama"
+    body = _make_gguf_bytes(
+        {
+            "general.architecture": arch,
+            "llama.attention.head_count_kv": 2,
+            "llama.attention.key_length": 512,
+            "llama.attention.value_length": 512,
+            "llama.block_count": 42,
+        }
+    )
+    p2.write_bytes(body)
+    assert gguf_kv_per_token_layer(str(p2)) == 2048
 
 
 # ─────────────────────────────────────────────
@@ -243,6 +305,19 @@ def test_requested_negative_auto_calc(monkeypatch):
     rt = resolve_runtime("auto", -1, model_path="m", model_size_bytes=4_360_000_000)
     assert rt.backend == "cuda"
     assert 0 < rt.gpu_layers < 42
+
+
+def test_resolve_runtime_kv_aware(monkeypatch):
+    """Büyük context, küçük context'e göre daha az katmanı GPU'ya almalı."""
+    monkeypatch.setattr(gpu_detect, "detect_hardware", lambda: _hw(free=5181))
+    monkeypatch.setattr(gpu_detect, "compiled_backends", lambda: ["cuda"])
+    monkeypatch.setattr(gpu_detect, "gguf_n_layers", lambda p: 42)
+    monkeypatch.setattr(gpu_detect, "gguf_kv_per_token_layer", lambda p: 2048)
+    large = resolve_runtime("auto", -1, model_path="m", model_size_bytes=4_360_000_000, n_ctx=65536)
+    small = resolve_runtime("auto", -1, model_path="m", model_size_bytes=4_360_000_000, n_ctx=4096)
+    assert large.backend == "cuda"
+    assert small.backend == "cuda"
+    assert 0 < large.gpu_layers < small.gpu_layers < 42
 
 
 def test_explicit_cuda_missing_raises(monkeypatch):
