@@ -107,15 +107,14 @@ def test_init_preserves_existing_api_key(store):
     assert store.get_api_key() == "kalici-anahtar"
 
 
-def test_init_imports_legacy_key_as_named(store):
-    """Miras settings.api_key, isimlendirilmiş 'Varsayılan' anahtarına aktarılır."""
+def test_init_does_not_import_legacy_key_as_named(store):
+    """Kullanıcı anahtarı kendisi oluşturur; miras ayar isimlendirilmiş anahtara aktarılmaz."""
     store.set_api_key("miras-anahtar")
     store.init()
-    keys = store.list_api_keys()
-    assert len(keys) == 1
-    assert keys[0]["name"] == "Varsayılan"
-    assert keys[0]["key"] == "miras-anahtar"
-    assert store.get_api_key() == "miras-anahtar"  # eski okuma yolu da çalışır
+    assert store.list_api_keys() == []  # otomatik 'Varsayılan' anahtar artık üretilmez
+    with pytest.raises(HTTPException) as exc:
+        auth.require_api_key(authorization="Bearer miras-anahtar")
+    assert exc.value.status_code == 401
 
 
 def test_multiple_named_keys_verified(store):

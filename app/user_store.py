@@ -118,19 +118,8 @@ class UserStore:
         )
         # Varsayılan ayar anahtarları: yalnızca YOKSA eklenir,
         # mevcut değerler (örn. API anahtarı) asla sıfırlanmaz
-        self._run("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (KEY_API_KEY, ""))
+        # api_key için varsayılan değer yerleştirilmez; kullanıcı her zaman kendi anahtarını oluşturmalı
         self._run("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (KEY_SETUP_DONE, "0"))
-        # Miras geçiş: eski tek settings.api_key varsa ve isimlendirilmiş anahtar
-        # tablosu boşsa, eski anahtar "Varsayılan" adıyla içe aktarılır. Böylece
-        # mevcut kurulumlar anahtarlarını kaybetmeden yeni API sayfasını görür.
-        legacy = self.get_setting(KEY_API_KEY)
-        if legacy:
-            existing = self._run("SELECT COUNT(*) AS n FROM api_keys", fetch="one")
-            if existing and existing["n"] == 0:
-                self._run(
-                    "INSERT INTO api_keys (name, key, created_at) VALUES (?, ?, ?)",
-                    ("Varsayılan", legacy, self._now()),
-                )
 
     # ------------------------------------------------------------------
     # Kullanıcılar
@@ -249,8 +238,11 @@ class UserStore:
         return dict(row) if row else None
 
     def delete_api_key(self, key_id: int) -> None:
-        """İsimlendirilmiş anahtarı siler."""
+        """İsimlendirilmiş anahtarı siler; son kalana kadar miras api_key temizler."""
         self._run("DELETE FROM api_keys WHERE id = ?", (key_id,))
+        remaining = self.get_all_api_keys()
+        if not remaining:
+            self.set_setting(KEY_API_KEY, "")
 
     def get_all_api_keys(self) -> list[str]:
         """Doğrulama için tüm isimlendirilmiş anahtar değerlerini döner."""

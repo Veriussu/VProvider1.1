@@ -93,15 +93,15 @@ def _login(client):
 # ------------------------------------------------------------------
 
 def test_setup_creates_user_and_cookie(tmp_path, monkeypatch):
-    """İlk kurulum kullanıcıyı oluşturur, oturumu çereze yazar, API anahtarı üretir."""
+    """İlk kurulum kullanıcıyı oluşturur, oturumu çereze yazar; API anahtarı üretilmez."""
     client, store = _make_client(tmp_path, monkeypatch, with_user=False)
     resp = client.post("/panel/setup", json={
         "username": "admin", "password": "guclu-sifre-1",
     })
     assert resp.status_code == 200
     assert store.is_setup_done()
-    keys = store.list_api_keys()
-    assert keys and keys[0]["name"] == "Varsayılan" and keys[0]["key"]  # varsayılan anahtar üretildi
+    # Varsayılan API anahtarı otomatik üretilmez (panel elle oluşturur)
+    assert store.list_api_keys() == []
     assert store.get_user_by_username("admin") is not None
     assert "vprovider_session" in client.cookies
     info = store.get_site_info()

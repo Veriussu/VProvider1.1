@@ -115,7 +115,7 @@ def _kur_client(tmp_path, monkeypatch, mode="content"):
     """API anahtarı + sahte motor içeren ortam kurar; TestClient döner."""
     store = UserStore(tmp_path / "test.db")
     store.init()
-    store.set_api_key(TEST_API_KEY)
+    store.create_api_key("Test", TEST_API_KEY)
     monkeypatch.setattr(auth, "get_store", lambda: store)
     monkeypatch.setattr(main_mod, "get_store", lambda: store)
 
@@ -150,7 +150,7 @@ def client(tmp_path, monkeypatch):
     # Geçici veritabanı: API anahtarı tanımla ve anahtarları test ortamına bağla
     store = UserStore(tmp_path / "test.db")
     store.init()
-    store.set_api_key(TEST_API_KEY)
+    store.create_api_key("Test", TEST_API_KEY)
 
     # Tekil örnekleri geçici nesnelere yönlendir (gerçek veriye dokunmaz)
     monkeypatch.setattr(auth, "get_store", lambda: store)

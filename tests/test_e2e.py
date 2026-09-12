@@ -58,9 +58,8 @@ def real_store(tmp_path_factory):
     """E2E için geçici veritabanı: kullanıcı + API anahtarı + kurulum hazır."""
     store = UserStore(tmp_path_factory.mktemp("e2e") / "e2e.db")
     store.init()
-    store.save_site_info("E2E Test", "", "", "", "e2e@ornek.com")
     store.mark_setup_done()
-    store.set_api_key(API_KEY)
+    store.create_api_key("E2E", API_KEY)
     from app.auth import hash_password
 
     store.create_user("e2e", hash_password("e2e-sifre-123"))

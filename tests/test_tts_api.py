@@ -25,7 +25,7 @@ def client(tmp_path, monkeypatch):
     """API anahtarlı hazır test ortamı."""
     store = UserStore(tmp_path / "tts.db")
     store.init()
-    store.set_api_key(TEST_API_KEY)
+    store.create_api_key("Ses Test", TEST_API_KEY)
     monkeypatch.setattr(auth, "get_store", lambda: store)
     monkeypatch.setattr(main_mod, "get_store", lambda: store)
     return TestClient(main_mod.app)
@@ -112,7 +112,7 @@ def panel(tmp_path, monkeypatch):
     store = UserStore(tmp_path / "tts-panel.db")
     store.init()
     store.mark_setup_done()
-    store.set_api_key(TEST_API_KEY)
+    store.create_api_key("Ses Panel", TEST_API_KEY)
     from app.auth import hash_password
 
     store.create_user("yonetici", hash_password("sifre-1234"))

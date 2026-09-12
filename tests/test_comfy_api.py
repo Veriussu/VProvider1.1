@@ -39,7 +39,7 @@ def client(tmp_path, monkeypatch):
     """API anahtarlı + sahte model içeren hazır test ortamı."""
     store = UserStore(tmp_path / "comfy.db")
     store.init()
-    store.set_api_key(TEST_API_KEY)
+    store.create_api_key("Gorsel Test", TEST_API_KEY)
     monkeypatch.setattr(auth, "get_store", lambda: store)
     monkeypatch.setattr(main_mod, "get_store", lambda: store)
     return TestClient(main_mod.app)
@@ -209,7 +209,7 @@ def panel(client, tmp_path, monkeypatch):
     store = UserStore(tmp_path / "comfy-panel.db")
     store.init()
     store.mark_setup_done()
-    store.set_api_key(TEST_API_KEY)
+    store.create_api_key("Gorsel Panel", TEST_API_KEY)
     from app.auth import hash_password
     store.create_user("yonetici", hash_password("sifre-1234"))
     monkeypatch.setattr(auth, "get_store", lambda: store)

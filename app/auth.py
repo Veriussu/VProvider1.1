@@ -115,9 +115,6 @@ def require_api_key(authorization: str | None = Header(default=None)) -> str:
     store = get_store()
     if any(verify_api_key(candidate, k) for k in store.get_all_api_keys()):
         return candidate
-    # Miras uyumluluğu: eski tek settings.api_key hâlâ geçerli olsun
-    if store.get_api_key() and verify_api_key(candidate, store.get_api_key()):
-        return candidate
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="API anahtarı geçersiz.",
