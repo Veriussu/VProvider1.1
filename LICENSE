@@ -1,0 +1,60 @@
+# VProvider — Sınırlı Kullanım Lisansı
+
+**Copyright (c) 2026 Veriüssü (veriussu.com)**
+
+**TÜM HAKLARI SAKLIDIR / ALL RIGHTS RESERVED**
+
+Bu yazılım (kaynak kodu, görseller, belgeler, komut dosyaları ve diğer tüm içerik
+dahil) **Veriüssü** firmasına aittir ve telif hakkı ile korunur.
+
+---
+
+## 1. İzin Verilen Kullanım
+
+Aşağıdaki kullanımlara **ücretsiz** olarak izin verilir:
+
+- **Kişisel kullanım** — kişisel, ticarî olmayan amaçlarla kurulum ve çalıştırma.
+- **Eğitim / araştırma** — akademik ve eğitim amaçlı kullanım.
+- **İnceleme / geliştirme** — kaynak kodu inceleme ve kişisel geliştirme.
+
+## 2. Ticarî Kullanım YASAKTIR
+
+Bu yazılımın **ticarî kullanımına izin verilmez**. Ticarî kullanım şunları içerir
+(ancak bunlarla sınırlı değildir):
+
+- Sağladığınız bir ürün, hizmet veya çözüm içinde (paketlenmiş veya ayrı) kullanım.
+- **SaaS / barındırma / API hizmeti** olarak sunulması (ücretli veya ücretsiz).
+- Danışmanlık, kurulum, yönetim veya bakım için ücret alınması.
+- Şirket içi / kurumsal ticarî operasyonlarda kullanılması.
+
+Ticarî kullanım için öncelikle **yazılı onay** alınmalıdır. Onay alınmadan ticarî
+kullanım telif hakkı ihlalidir.
+
+**Ticarî kullanım iletişimi:** `info@veriussu.com`
+
+## 3. Dağıtım ve Değiştirme
+
+- Kopyalama, değiştirme ve dağıtım ancak **ticarî olmayan** amaçlarla, kaynak
+  gösterilerek ve bu lisans tutulduğu sürece yapılabilir.
+- Dağıtılan her kopyada bu lisans ve telif bildirimi korunmalıdır.
+- Değiştirilmiş sürümlerde de tüm bu koşullar geçerlidir.
+
+## 4. Sorumluluk Reddi (WARRANTY DISCLAIMER)
+
+Bu yazılım "OLDUĞU GİBİ" (AS IS) sağlanır. Veriüssü, açık veya zımni her türlü
+garantiyi (satılabilirlik, belirli bir amaca uygunluk, üçüncü taraf haklarını
+ihlal etmeme dahil ancak bunlarla sınırlı değildir) açıkça reddeder. Hiçbir
+durumda Veriüssü veya telif sahipleri, bu yazılımın kullanımından kaynaklanan
+doğrudan, dolaylı, arızi, özel veya sonuçsal zararlardan sorumlu tutulamaz.
+
+## 5. Model Ağırlıkları
+
+Bu lisans yalnızca VProvider **yazılım kodunu** kapsar. VProvider ile indirilen
+model ağırlıkları kendi açık kaynak lisanslarına tabidir (ör. HuggingFace'te
+belirtilen lisanslar).
+
+---
+
+**Veriüssü**
+Web: https://veriussu.com
+E-posta: info@veriussu.com

@@ -1,5 +1,9 @@
 # VProvider — Hafif Yerel Yapay Zeka Model Sunucusu
 
+> **Lisans:** Bu yazılımın tüm hakları **Veriüssü (veriussu.com)** firmasına aittir.
+> Ticarî kullanım **yasaktır**; ticarî kullanım için `info@veriussu.com` ile iletişime
+> geçin. Ayrıntı: [LICENSE](LICENSE)
+
 VProvider, **GGUF** formatındaki açık kaynak modelleri lokalinizde (veya LAN'ınızda)
 çalıştıran hafif bir sunucudur. OpenAI uyumlu `/v1/*` API'si sayesinde Chatbox,
 SillyTavern, OpenAI SDK'ları gibi araçlarla doğrudan çalışır; web yönetim paneliyle
@@ -13,6 +17,15 @@ de HuggingFace'ten tek tıkla model indirir, bellek kullanımını yönetirsiniz
 
 ## Özellikler
 
+- **Otomatik GPU algılama** — `GPU_MODE=auto` ile NVIDIA/AMD/Intel donanımını
+  `nvidia-smi`/`rocm-smi`/sysfs üzerinden algılar; kurulu derlemeye göre CUDA,
+  ROCm, Vulkan, SYCL veya CPU'yu seçer. `install.sh` uyumsuzluğu fark edip
+  motoru donanıma göre otomatik yeniden derler (ör. CUDA). `/panel/system/gpu`
+  uç noktası anlık GPU durumunu verir.
+- **Akıllı GPU katmanı hesabı** — `GPU_LAYERS=-1` (otomatik) seçiminde modelin
+  başlığından katman sayısı ve **KV önbellek boyutu** okunur (bağlam dahil);
+  VRAM'e sığan katman sayısı hesaplanır. VRAM yetmezse otomatik olarak CPU
+  moduna düşülür, `gpu_layers` kullanıcıya bildirilir.
 - **OpenAI uyumlu API** — `/v1/models`, `/v1/chat/completions`, `/v1/completions`,
   `/v1/responses` (akışsız + SSE streaming, OpenAI hata yapısı)
 - **Function / tool calling** — chat ve responses uç noktalarında araç çağrısı,
@@ -113,12 +126,13 @@ değilse uvicorn'u doğrudan yönetirler.
 | `HOST` | `0.0.0.0` | Dinleme adresi (LAN için `0.0.0.0`) |
 | `PORT` | `9055` | Dinleme portu |
 | `MEMORY_MODE` | `dynamic` | `keep` / `dynamic` |
-| `IDLE_TIMEOUT_MINUTES` | `0` | dynamic modda boşta kalma süresi; `0` = kullanım bitince anında GPU'dan boşalt (çoklu model) |
+| `IDLE_TIMEOUT_MINUTES` | `0` | dynamic modda boşta kalma süresi; `0` = kullanım bitince anında GPU'dan boşalt (çoklu model), `5`+ = CLI/opencode kullanımında model Bellek'te kalır |
+| `GPU_MODE` | `auto` | `auto` / `cuda` / `rocm` / `sycl` / `vulkan` / `cpu` — backend ve katman seçimini belirler; `auto` donanımı algılar |
 | `MODELS_DIR` | `models` | GGUF klasörü |
 | `DATA_DIR` | `data` | Veritabanı klasörü |
 | `DATABASE_PATH` | `data/vprovider.db` | SQLite dosyası |
 | `CONTEXT_SIZE` | `4096` | Bağlam penceresi uzunluğu |
-| `GPU_LAYERS` | `-1` | GPU'ya taşınan katman sayısı (`-1` = tümü) |
+| `GPU_LAYERS` | `-1` | GPU'ya taşınan katman sayısı (`-1` = otomatik hesapla) |
 | `THREADS` | `0` | CPU iş parçacığı (`0` = otomatik) |
 | `HF_TOKEN` | *(boş)* | Gated HuggingFace repoları için |
 | `COMFYUI_ENABLED` | `false` | Görsel üretim köprüsünü açar |
@@ -216,7 +230,9 @@ curl -N http://localhost:9055/v1/chat/completions \
   ayrılır:
   - `IDLE_TIMEOUT_MINUTES=0` (varsayılan): yanıt tamamlanır tamamlanmaz anında
     boşaltılır → tek GPU'da birden çok model arasında serbestçe geçiş yapılır,
-    VRAM sürekli açıktır.
+    VRAM sürekli açıktır. **Chartbox/TTY yerine CLI (ör. opencode) kullanılıyorsa**
+    yanıtların yüklenmesi için her istekte yeniden yükleme yaşanır; bu durumda
+    `IDLE_TIMEOUT_MINUTES=5` (veya üstü) önerilir.
   - `IDLE_TIMEOUT_MINUTES>0`: o süre boyunca yeni istek gelmezse boşaltılır →
     **boşta 0 MB VRAM**.
 
@@ -319,6 +335,7 @@ vprovider/
 │   ├── main.py           # Uygulama + router bağlama + panel ön yüzü
 │   ├── config.py         # .env okuma + sabit sistem kimliği (SITE_IDENTITY)
 │   ├── model_manager.py  # Bellek modları + yükleme/boşaltma
+│   ├── gpu_detect.py     # Donanım/backend algılama + akıllı katman hesabı
 │   ├── llama_backend.py  # llama.cpp sarmalayıcı (gerçek motor)
 │   ├── auth.py           # Kullanıcı/şifre + API anahtarı
 │   ├── user_store.py     # SQLite (kullanıcı, oturum, ayarlar, API anahtarları)
@@ -345,6 +362,7 @@ vprovider/
 ├── data/                 # SQLite veritabanı
 ├── install.sh            # Otomatik kurulum
 ├── clear.sh              # remove.sh takma adı
+├── LICENSE               # Sınırlı kullanım lisansı (Veriüssü)
 └── .env.example          # Ayarlar şablonu
 ```
 
@@ -363,9 +381,20 @@ proje dizininin tamamı kaldırılır.
 
 ---
 
-## Lisans / Notlar
+## Lisans
 
-- Tüm model ağırlıkları ilgili açık kaynak lisanslarına tabidir (HuggingFace'ten indirilir).
+Bu yazılımın **tüm hakları [Veriüssü](https://veriussu.com) firmasına aittir**
+(© 2026 Veriüssü). Ayrıntılı koşullar [LICENSE](LICENSE) dosyasında yer alır:
+
+- **İzin verilen:** kişisel, eğitim ve ticarî olmayan kullanım.
+- **YASAK:** ticarî kullanım — ürün/hizmet içinde, SaaS/barındırma olarak,
+  danışmanlık dahil. Ticarî kullanım için `info@veriussu.com` adresinden yazılı
+  onay alınmalıdır.
+- Model ağırlıkları ilgili açık kaynak lisanslarına tabidir (HuggingFace'ten
+  indirilir); bu lisans yalnızca yazılım kodunu kapsar.
+
+## Notlar
+
 - Sunucu varsayılanda `0.0.0.0:9055` dinler; dış ağa açmadan önce mutlaka panel
   kurulumunu tamamlayın ve API anahtarınızı koruyun.
 - Dış ağ/domain + otomatik HTTPS için hazır rehber: `deploy/caddy-rehber.md`
