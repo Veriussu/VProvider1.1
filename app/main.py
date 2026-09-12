@@ -26,6 +26,7 @@ from app.admin_api import router as admin_router
 from app.comfy_api import router as comfy_router
 from app.comfy_api import video_router as comfy_video_router
 from app.config import settings
+from app.gpu_detect import compiled_backends, detect_hardware, resolve_runtime
 from app.openai_api import router as openai_router
 from app.tts_api import router as tts_router
 from app.user_store import get_store
@@ -46,6 +47,14 @@ async def lifespan(app: FastAPI):
     settings.database_file.parent.mkdir(parents=True, exist_ok=True)
     get_store().init()
     logger.info("%s sunucusu başlatıldı (bellek modu: %s)", settings.app_name, settings.memory_mode)
+    hw = detect_hardware()
+    rt = resolve_runtime(gpu_mode=settings.gpu_mode, requested_layers=settings.gpu_layers)
+    logger.info(
+        "GPU durumu: %s | Donanım: %s | Derlenmiş: %s",
+        rt.note,
+        hw.name or hw.vendor,
+        ", ".join(compiled_backends()),
+    )
     yield
     logger.info("%s sunucusu kapatıldı", settings.app_name)
 

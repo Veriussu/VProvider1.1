@@ -11,6 +11,7 @@
 #  Kullanım: bash install.sh                (otomatik tespit)
 #            bash install.sh --cpu          (GPU yerine CPU derle)
 #            bash install.sh --rebuild      (llama-cpp-python zorla derle)
+#            bash install.sh --skip-build   (gerekse bile derlemeyi atla)
 #            bash install.sh --no-systemd   (systemd kurulumunu atla)
 # ─────────────────────────────────────────────────────────────
 
@@ -21,14 +22,16 @@ cd "${PROJECT_ROOT}"
 
 FORCE_CPU=0
 FORCE_REBUILD=0
+SKIP_BUILD=0
 WITH_SYSTEMD=1
 for arg in "$@"; do
   case "${arg}" in
     --cpu) FORCE_CPU=1 ;;
     --rebuild) FORCE_REBUILD=1 ;;
+    --skip-build) SKIP_BUILD=1 ;;
     --no-systemd) WITH_SYSTEMD=0 ;;
     -h|--help)
-      echo " Kullanım: bash install.sh [--cpu] [--rebuild] [--no-systemd]"; exit 0 ;;
+      echo " Kullanım: bash install.sh [--cpu] [--rebuild] [--skip-build] [--no-systemd]"; exit 0 ;;
     *) echo " Bilinmeyen bayrak: ${arg}" >&2; exit 1 ;;
   esac
 done
@@ -93,6 +96,42 @@ llama_kurulu_ve_iliskitli() {
   "${PY}" -c "import llama_cpp; print(llama_cpp.__version__)" >/dev/null 2>&1
 }
 
+# Kurulu derlemenin içerdiği backend adı (libggml-*.so dosyalarına bakılır)
+llama_compiled_backend() {
+  local libdir=${PROJECT_ROOT}/.venv/lib/python3.*/site-packages/llama_cpp/lib
+  [ -d ${libdir} ] || { echo "cpu"; return; }
+  for b in cuda:libggml-cuda.so rocm:libggml-hip.so sycl:libggml-sycl.so vulkan:libggml-vulkan.so; do
+    local name="${b%%:*}"
+    local so="${b##*:}"
+    if [ -f ${libdir}/${so} ]; then echo "${name}"; return; fi
+  done
+  echo "cpu"
+}
+
+# Donanım tespitine göre istenen backend adı (pick_and_build ile aynı öncelik)
+llama_desired_backend() {
+  if [ "${FORCE_CPU}" -eq 1 ]; then echo "cpu"; return; fi
+  if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then echo "cuda"; return; fi
+  if command -v rocm-smi >/dev/null 2>&1; then echo "rocm"; return; fi
+  if command -v lspci >/dev/null 2>&1 && lspci 2>/dev/null | grep -qiE "vga.*intel|3d.*intel"; then echo "sycl"; return; fi
+  if command -v lspci >/dev/null 2>&1 && lspci 2>/dev/null | grep -qiE "vga.*(nvidia|amd)|3d.*(nvidia|amd)"; then echo "vulkan"; return; fi
+  echo "cpu"
+}
+
+# İstenen backend ile kurulu backend uyumlu mu? (AMD/Intel için vulkan da geçer)
+llama_backend_uyumlu() {
+  local desired="$1"
+  local compiled="$2"
+  [ "${desired}" = "${compiled}" ] && return 0
+  if [ "${desired}" = "cpu" ]; then
+    return 1  # --cpu isteniyorsa yalnızca CPU derlemesi kabul edilir
+  fi
+  case "${desired}" in
+    rocm|sycl) [ "${compiled}" = "vulkan" ] && return 0 ;;
+  esac
+  return 1
+}
+
 llama_derle() {
   local flags="$1"
   echo " • llama-cpp-python derleniyor (${flags}) — bu birkaç dakika sürebilir..."
@@ -124,8 +163,27 @@ pick_and_build() {
   echo " ✓ Motor: ${backend}"
 }
 
-if llama_kurulu_ve_iliskitli && [ "${FORCE_REBUILD}" -eq 0 ]; then
-  echo " ✓ llama-cpp-python zaten kurulu (motor yeniden derlenmedi; --rebuild zorlar)"
+# Derleme kararı: --rebuild zorlar; --skip-build atlatır; bunların dışında
+# algılanan donanımla kurulu derleme uyumsuzsa otomatik olarak yeniden derlenir.
+compiled="$(llama_compiled_backend)"
+desired="$(llama_desired_backend)"
+needs_build=0
+build_reason=""
+if [ "${FORCE_REBUILD}" -eq 1 ]; then
+  needs_build=1
+  build_reason="--rebuild bayrağı verildi"
+elif [ "${SKIP_BUILD}" -eq 1 ]; then
+  needs_build=0
+elif ! llama_backend_uyumlu "${desired}" "${compiled}"; then
+  needs_build=1
+  build_reason="mevcut derleme (${compiled}) algılanan donanım (${desired}) ile uyumsuz"
+fi
+
+if [ "${needs_build}" -eq 1 ]; then
+  echo " • Motor yeniden derlenecek: ${build_reason}"
+  pick_and_build
+elif llama_kurulu_ve_iliskitli; then
+  echo " ✓ llama-cpp-python zaten kurulu ve uyumlu (motor yeniden derlenmedi)"
 else
   pick_and_build
 fi

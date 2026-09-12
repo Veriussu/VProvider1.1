@@ -227,8 +227,8 @@ def panel_status():
 def setup(req: SetupRequest, response: Response):
     """İlk kurulum: yönetici hesabını oluşturur ve panele giriş yapar.
 
-    Yalnızca kurulum tamamlanmamışken çalışır. Ayrıca varsayılan isimlendirilmiş
-    bir API anahtarı da oluşturulur (daha sonra API sayfasından yönetilir).
+    Yalnızca kurulum tamamlanmamışken çalışır. Varsayılan API anahtarı
+    üretilmez; istenen anahtarlar API sayfasından elle oluşturulur.
     """
     _require_setup_not_done()
     username = req.username.strip()
@@ -243,8 +243,6 @@ def setup(req: SetupRequest, response: Response):
         raise HTTPException(status_code=409, detail="Bu kullanıcı adı zaten kullanılıyor")
 
     store.mark_setup_done()
-    if not store.list_api_keys() and not store.get_api_key():
-        store.create_api_key("Varsayılan", generate_token())
 
     user = store.get_user_by_username(username)
     token = create_session_for_user(user["id"])
@@ -543,6 +541,38 @@ async def _download_progress_stream(repo_id: str) -> AsyncIterator[str]:
 
 
 # ------------------------------------------------------------------
+# Sistem durumu (oturum korumalı)
+# ------------------------------------------------------------------
+
+@router.get("/system/gpu")
+def system_gpu(_: dict = Depends(get_current_session)):
+    """Donanım + kurulu/aktif llama_cpp backend bilgisini döner.
+
+    Örnek kullanım: panel "Görsel" veya "Sistem" sayfasında GPU modunu
+    göstermek. GPU algılamasını tüketmez; yalnızca özet üretir.
+    """
+    from app.gpu_detect import compiled_backends, detect_hardware, resolve_runtime
+
+    hw = detect_hardware()
+    resolved = resolve_runtime(gpu_mode=settings.gpu_mode, requested_layers=settings.gpu_layers)
+    return {
+        "hardware": {
+            "vendor": hw.vendor,
+            "name": hw.name,
+            "vram_total_mb": hw.vram_total_mb,
+            "vram_free_mb": hw.vram_free_mb,
+            "driver": hw.driver,
+        },
+        "compiled_backends": compiled_backends(),
+        "backend": resolved.backend,
+        "gpu_layers": resolved.gpu_layers,
+        "note": resolved.note,
+        "gpu_mode": settings.gpu_mode,
+        "gpu_layers_setting": settings.gpu_layers,
+    }
+
+
+# ------------------------------------------------------------------
 # ComfyUI görsel üretim (oturum korumalı)
 # ------------------------------------------------------------------
 
@@ -719,8 +749,5 @@ def delete_api_key(key_id: int, _: dict = Depends(get_current_session)):
     if store.get_api_key_by_id(key_id) is None:
         raise HTTPException(status_code=404, detail="API anahtarı bulunamadı.")
     store.delete_api_key(key_id)
-    # Son anahtar silinirse miras settings.api_key de temizlenir (gereksiz kalmasın)
-    if not store.list_api_keys():
-        store.set_api_key("")
     logger.info("API anahtarı silindi (id=%s)", key_id)
     return {"ok": True, "deleted": key_id}

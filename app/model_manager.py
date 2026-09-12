@@ -77,6 +77,8 @@ class ModelManager:
             context_size=settings.context_size,
             gpu_layers=settings.gpu_layers,
             threads=settings.threads,
+            gpu_mode=settings.gpu_mode,
+            model_size_bytes=info.size_bytes,
         )
 
     # ------------------------------------------------------------------

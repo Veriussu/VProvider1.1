@@ -17,7 +17,12 @@
 
 import gc
 import json
+import logging
 from typing import Iterable, Optional
+
+from app.gpu_detect import resolve_runtime
+
+logger = logging.getLogger("vprovider")
 
 
 class LlamaEngine:
@@ -275,7 +280,12 @@ def create_engine(model_path: str, **options) -> LlamaEngine:
     """Gerçek llama.cpp motorunu kurar.
 
     llama-cpp-python kurulu değilse (henüz install.sh çalışmamışsa)
-    anlaşılır bir hata verir; kuruluysa LlamaCppEngine döner.
+    anlaşılır bir hata verir; kuruluysa LLM GPU algılamasına göre
+    nihai gpu_layers değerini hesaplayıp LlamaCppEngine döner.
+
+    Özel seçenekler (LlamaCppEngine'e geçmez):
+      gpu_mode          -> auto|cuda|rocm|sycl|vulkan|cpu (.env GPU_MODE)
+      model_size_bytes  -> VRAM hesapları için model dosya boyutu
     """
     try:
         import llama_cpp  # noqa: F401  (kurulu mu?)
@@ -285,4 +295,23 @@ def create_engine(model_path: str, **options) -> LlamaEngine:
             "install.sh betiğini çalıştırın (veya CPU için: "
             "pip install llama-cpp-python)."
         ) from exc
+
+    gpu_mode = options.pop("gpu_mode", "auto")
+    model_size_bytes = options.pop("model_size_bytes", 0)
+    requested_layers = options.get("gpu_layers", -1)
+
+    runtime = resolve_runtime(
+        gpu_mode=gpu_mode,
+        requested_layers=requested_layers,
+        model_path=model_path,
+        model_size_bytes=model_size_bytes,
+    )
+    options["gpu_layers"] = runtime.gpu_layers
+    logger.info("GPU kararı: %s", runtime.note)
+    logger.info(
+        "Donanım: %s | Derlenmiş backend: %s | Kullanılacak backend: %s",
+        runtime.hardware.name or runtime.hardware.vendor,
+        ", ".join(runtime.compiled_backends),
+        runtime.backend,
+    )
     return LlamaCppEngine(model_path, **options)

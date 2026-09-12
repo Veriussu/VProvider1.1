@@ -49,7 +49,9 @@ class Settings(BaseSettings):
 
     # LLM çalıştırma parametreleri
     context_size: int = 4096
-    gpu_layers: int = -1        # -1 = tümü GPU'da; az VRAM'de düşürülür
+    # GPU kullanım modu: auto (donanıma göre) | cuda | rocm | sycl | vulkan | cpu
+    gpu_mode: str = "auto"
+    gpu_layers: int = -1        # -1 = otomatik (VRAM'e göre); pozitif = sabit
     threads: int = 0            # 0 = otomatik
 
     # ComfyUI (görsel üretim motoru) köprüsü — isteğe bağlı modül
